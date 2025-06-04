@@ -4,7 +4,7 @@
 
 An ultra-lightweight command-line AI coding assistant tool that mimics Cursor implementation. Elpis is an intelligent code assistant based on LangChain and OpenAI API that helps developers with code writing, file operations, and project management through natural language interaction.
 
-> 🎓 **Learning Project**: This is a minimalist project designed for learning and understanding how AI coding assistants like Cursor work under the hood. Perfect for developers who want to explore the fundamentals of AI-powered development tools.
+> 🎓 **Learning Project**: This is a minimalist project that is perfect for learning and understanding the working principles of AI coding assistants such as Cursor. Very suitable for developers who want to explore the basic principles of AI driven development tools.
 
 ## Features
 
@@ -86,6 +86,7 @@ uvx --from elpis-agent elpis --env_file /path/to/.env
 ```
 
 This command will:
+
 - Automatically download and run the latest version of elpis-agent
 - Use your custom environment file for configuration
 - No need for local installation or virtual environment setup
@@ -135,6 +136,7 @@ elpis-agent/
 ### ElpisAgent
 
 The main agent class that handles:
+
 - Message management with configurable history limits
 - Tool integration and execution
 - Model interaction and response generation
@@ -143,12 +145,14 @@ The main agent class that handles:
 ### Tools
 
 Built-in tools include:
+
 - **read_file**: Read file contents
 - **run_terminal_cmd**: Execute terminal commands with user confirmation
 
 ### Memory Management
 
 The agent implements intelligent memory management:
+
 - Configurable message history limit (default: 20 messages)
 - Automatic truncation of old messages while preserving system context
 - Prevention of token overflow and cost optimization
@@ -157,14 +161,14 @@ The agent implements intelligent memory management:
 
 Environment variables can be configured in the `.env` file:
 
-| Variable | Description | Default |
-|----------|-------------|----------|
-| `OPENAI_API_KEY` | OpenAI API key (required) | - |
-| `OPENAI_BASE_URL` | OpenAI API base URL | `https://api.openai.com/v1` |
-| `MODEL` | Model name to use | `gpt-4o-mini` |
-| `TEMPERATURE` | Model temperature (0.0-2.0) | `0.7` |
-| `SYSTEM_PROMPT` | Custom system prompt | Default agent prompt |
-| `MAX_MEMORY_MESSAGES` | Maximum number of messages to keep in memory | `20` |
+| Variable                | Description                                  | Default                       |
+| ----------------------- | -------------------------------------------- | ----------------------------- |
+| `OPENAI_API_KEY`      | OpenAI API key (required)                    | -                             |
+| `OPENAI_BASE_URL`     | OpenAI API base URL                          | `https://api.openai.com/v1` |
+| `MODEL`               | Model name to use                            | `gpt-4o-mini`               |
+| `TEMPERATURE`         | Model temperature (0.0-2.0)                  | `0.7`                       |
+| `SYSTEM_PROMPT`       | Custom system prompt                         | Default agent prompt          |
+| `MAX_MEMORY_MESSAGES` | Maximum number of messages to keep in memory | `20`                        |
 
 ## Development
 
@@ -198,12 +202,14 @@ python -m build
 ## TODO - Feature Roadmap
 
 ### 🎯 Core Features
+
 - [ ] **Codebase & Indexing**: Implement codebase analysis and intelligent indexing for better context understanding
 - [ ] **Enhanced Web Search**: Improve web search tools with better result filtering and integration
 - [ ] **Message & Operation Memory**: Advanced message memorization and operation history tracking
 - [ ] **IDE Plugin Development**: Create plugins for popular IDEs (VS Code, IntelliJ, etc.)
 
 ### 🔧 Additional Features
+
 - [ ] **Multi-language Support**: Extend support for more programming languages
 - [ ] **Code Review Assistant**: Automated code review and suggestion system
 - [ ] **Project Template Generator**: Generate project templates based on requirements
@@ -212,6 +218,7 @@ python -m build
 - [ ] **Custom Tool Development**: Framework for creating custom tools
 
 ### 📚 Documentation & Community
+
 - [ ] **Comprehensive Documentation**: Detailed API documentation and tutorials
 - [ ] **Example Projects**: Sample projects demonstrating various use cases
 - [ ] **Community Contributions**: Guidelines and tools for community contributions
