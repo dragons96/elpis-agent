@@ -1,5 +1,8 @@
 import os.path
 import subprocess
+from functools import partial
+
+subprocess.Popen = partial(subprocess.Popen, encoding="utf-8")
 
 from langchain_core.tools import tool
 from . import constants
