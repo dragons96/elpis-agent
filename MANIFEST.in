@@ -1,0 +1,6 @@
+include *.py
+include *.txt
+include *.md
+recursive-include my_agent *.py
+recursive-include my_agent *.txt
+recursive-include my_agent *.md
