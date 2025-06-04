@@ -15,6 +15,20 @@
 
 ## 安装
 
+### 快速开始使用 uvx（推荐）
+
+您可以使用 `uvx` 直接运行 Elpis Agent，无需安装：
+
+```bash
+uvx --from elpis-agent elpis --env_file /path/to/.env
+```
+
+此命令将：
+
+- 自动下载并运行最新版本的 elpis-agent
+- 使用您的自定义环境配置文件
+- 无需本地安装或虚拟环境设置
+
 ### 环境要求
 
 - Python >= 3.11
@@ -73,20 +87,6 @@ elpis
 ```bash
 python -m elpis.main
 ```
-
-### 快速开始使用 uvx（推荐）
-
-您也可以使用 `uvx` 直接运行 Elpis Agent，无需安装：
-
-```bash
-uvx --from elpis-agent elpis --env_file /path/to/.env
-```
-
-此命令将：
-
-- 自动下载并运行最新版本的 elpis-agent
-- 使用您的自定义环境配置文件
-- 无需本地安装或虚拟环境设置
 
 ### 指定配置文件
 

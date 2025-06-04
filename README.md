@@ -18,6 +18,20 @@ An ultra-lightweight command-line AI coding assistant tool that mimics Cursor im
 
 ## Installation
 
+### Quick Start with uvx (Recommended)
+
+You can also run Elpis Agent directly without installation using `uvx`:
+
+```bash
+uvx --from elpis-agent elpis --env_file /path/to/.env
+```
+
+This command will:
+
+- Automatically download and run the latest version of elpis-agent
+- Use your custom environment file for configuration
+- No need for local installation or virtual environment setup
+
 ### Requirements
 
 - Python >= 3.11
@@ -76,20 +90,6 @@ Or run directly with Python:
 ```bash
 python -m elpis.main
 ```
-
-### Quick Start with uvx (Recommended)
-
-You can also run Elpis Agent directly without installation using `uvx`:
-
-```bash
-uvx --from elpis-agent elpis --env_file /path/to/.env
-```
-
-This command will:
-
-- Automatically download and run the latest version of elpis-agent
-- Use your custom environment file for configuration
-- No need for local installation or virtual environment setup
 
 ### Interactive Commands
 
