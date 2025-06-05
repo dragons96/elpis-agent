@@ -1,8 +1,11 @@
+import os
+from typing import Literal
+
 import click
 from dotenv import load_dotenv
 
 from elpis.agent import ElpisAgent
-from elpis import constants
+from elpis import constants, i18n, tools, codebase
 
 
 @click.command(help=constants.USAGE)
@@ -11,24 +14,35 @@ from elpis import constants
 @click.help_option('-h', '--help')
 def main(
         env_file: str | None = None,
-        lang: str = 'en',
+        lang: Literal['en', 'zh'] = 'en',
 ):
+    os.environ['LANG'] = lang
     print(constants.BANNER, flush=True)
-    if lang == 'en':
-        print(constants.WELCOME_INFO, flush=True)
-    elif lang == 'zh':
-        print(constants.WELCOME_INFO_ZH, flush=True)
     if env_file:
         load_dotenv(env_file)
     else:
         load_dotenv()
 
+    lang = i18n.select_lang(lang)
+    print(lang.WELCOME_INFO, flush=True)
+
+    # initialize codebase
+    tools.init_codebase(os.getcwd())
+
     agent = ElpisAgent()
     question = input("[You]: ")
 
+    content = ''
     while question.lower() not in ['q', 'quit']:
-        if question:
-            agent.ask(question)
+        if not question.strip():
+            if content:
+                agent.ask(content)
+                content = ''
+            question = input("[You]: ")
+            continue
+        if question.lower() in ('i', 'index'):
+            tools.codebase.index_codebase()
+        content += question + '\n'
         question = input("[You]: ")
 
 

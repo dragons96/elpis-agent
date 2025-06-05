@@ -2,10 +2,37 @@ import os.path
 import subprocess
 from functools import partial
 
+from elpis.codebase import CodebaseIndexer
+
 subprocess.Popen = partial(subprocess.Popen, encoding="utf-8")
 
 from langchain_core.tools import tool
-from . import constants
+from elpis import constants
+
+codebase: CodebaseIndexer | None = None
+
+def init_codebase(codebase_path: str):
+    global codebase
+    codebase = CodebaseIndexer(codebase_path)
+
+
+@tool(
+    name_or_callable="codebase_search",
+    description="Find snippets of code from the codebase most relevant to the search query. This is a semantic search tool, so the query should ask for something semantically matching what is needed. If it makes sense to only search in particular directories, please specify them in the target_directories field. Unless there is a clear reason to use your own search query, please just reuse the user's exact query with their wording. Their exact wording/phrasing can often be helpful for the semantic search query. Keeping the same exact question format can also be helpful."
+)
+def codebase_search(
+        query: str,
+        target_directories: list[str] | None = None,
+        explanation: str | None = None,
+):
+    """Find snippets of code from the codebase most relevant to the search query. This is a semantic search tool, so the query should ask for something semantically matching what is needed. If it makes sense to only search in particular directories, please specify them in the target_directories field. Unless there is a clear reason to use your own search query, please just reuse the user's exact query with their wording. Their exact wording/phrasing can often be helpful for the semantic search query. Keeping the same exact question format can also be helpful."""
+    if codebase is None:
+        print("codebase is not initialized", flush=True)
+        return "codebase is not initialized"
+    # todo: implements target_directories
+    if explanation:
+        print(f"[{constants.AI_AGENT_NAME}] {explanation}", flush=True)
+    return codebase.search_codebase(query)
 
 
 @tool(
@@ -310,6 +337,9 @@ def edit_file(
         with open(target_file, "w", encoding="utf-8") as f:
             f.write(updated_content)
 
+        if codebase:
+            codebase.update_file_documents(target_file)
+
         return f"Successfully replaced code in {target_file}"
 
     except Exception as e:
@@ -499,6 +529,9 @@ def create_file(
         with open(full_path, "w", encoding="utf-8") as f:
             f.write(initial_content)
 
+        if codebase:
+            codebase.add_file_documents(full_path)
+
         return f"Successfully created file: {target_file}"
     except PermissionError:
         return f"[Error] Permission denied when trying to create '{target_file}'."
@@ -535,6 +568,8 @@ def delete_file(
 
     try:
         os.remove(full_path)
+        if codebase:
+            codebase.remove_file_documents(full_path)
         return f"Successfully deleted file: {target_file}"
     except PermissionError:
         return f"[Error] Permission denied when trying to delete '{target_file}'."
@@ -593,6 +628,7 @@ def diff_history(
 
 
 TOOLS = [
+    codebase_search,
     read_file,
     run_terminal_cmd,
     list_dir,

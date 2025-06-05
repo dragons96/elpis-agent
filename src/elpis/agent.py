@@ -1,31 +1,30 @@
 import os
 
-from langchain.chat_models import init_chat_model
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
 
-from . import tools, constants, prompts
+from elpis import tools, constants, prompts, model_factory
 
 
 class ElpisAgent:
     __name__ = constants.AI_AGENT_NAME
 
-    def __init__(self, agent_model: BaseChatModel = None):
+    def __init__(self,
+                 chat_model: BaseChatModel = None,
+                 ):
         self._tool_selector = {tool.name: tool for tool in tools.TOOLS}
-        if agent_model:
-            self._agent_model = agent_model.bind_tools(tools.TOOLS)
+        if chat_model:
+            self._chat_model = chat_model.bind_tools(tools.TOOLS)
         else:
-            self._agent_model = init_chat_model(
-                model=os.getenv("MODEL"),
-                model_provider="openai",
-                base_url=os.getenv("OPENAI_BASE_URL"),
-                temperature=float(os.getenv("TEMPERATURE", default="0.3"))
+            self._chat_model = model_factory.new_model(
+                os.getenv('CHAT_MODEL_KEY_PREFIX')
             ).bind_tools(tools.TOOLS)
 
         self._messages: list[BaseMessage] = [
             SystemMessage(prompts.ElpisPrompt),
             SystemMessage(prompts.DonePrompt),
         ]
+
         # add system prompt
         system_prompt = os.getenv('SYSTEM_PROMPT', default=constants.SYSTEM_PROMPT)
         if system_prompt:
@@ -34,7 +33,7 @@ class ElpisAgent:
     def _model_invoke(self):
         next_message = None
         start = True
-        for chunk in self._agent_model.stream(self._messages):
+        for chunk in self._chat_model.stream(self._messages):
             self._output_stream(chunk, start=start)
             start = False
             if next_message is None:
