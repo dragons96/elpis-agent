@@ -24,10 +24,10 @@
 您可以使用 `uvx` 直接运行 Elpis Agent，无需安装：
 
 ```bash
-uvx --from elpis-agent elpis --env_file /path/to/.env
+uvx --no-cache --from https://github.com/dragons96/elpis-agent.git elpis --env_file /path/to/.env --lang [en|zh]
 ```
 
-此命令将：
+此命令将：uvx --no-cache --from git@github.com:dragons96/elpis-agent.git elpis --env_file D:\Codes\examples\my-agent\.env --lang zhuvx --no-cache --from git@github.com:dragons96/elpis-agent.git elpis --env_file D:\Codes\examples\my-agent\.env --lang zh
 
 - 自动下载并运行最新版本的 elpis-agent
 - 使用您的自定义环境配置文件

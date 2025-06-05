@@ -27,7 +27,10 @@ An ultra-lightweight command-line AI coding assistant tool that mimics Cursor im
 You can also run Elpis Agent directly without installation using `uvx`:
 
 ```bash
-uvx --from elpis-agent elpis --env_file /path/to/.env
+# github
+uvx --no-cache --from https://github.com/dragons96/elpis-agent.git elpis --env_file /path/to/.env --lang [en|zh]
+# gitee
+uvx --no-cache --from uvx --no-cache --from https://gitee.com/dragons96/elpis-agent.git elpis --env_file /path/to/.env --lang [en|zh]
 ```
 
 This command will:
@@ -216,47 +219,62 @@ Multi-language support:
 Environment variables can be configured in the `.env` file:
 
 ### Chat Model Configuration
-| Variable                | Description                                  | Default                       |
-| ----------------------- | -------------------------------------------- | ----------------------------- |
-| `CHAT_BASE_URL`       | Chat model API base URL                      | `https://api.openai.com/v1` |
-| `CHAT_API_KEY`        | Chat model API key                           | -                             |
-| `CHAT_MODEL`          | Chat model name                              | `gpt4.1`                    |
-| `CHAT_MODEL_PROVIDER` | Chat model provider (openai, ollama)         | `openai`                    |
-| `CHAT_MODEL_TYPE`     | Chat model type                              | `chat`                      |
-| `CHAT_TEMPERATURE`    | Chat model temperature                        | `0.3`                       |
 
-### Embedding Model Configuration
-| Variable                    | Description                                  | Default                       |
-| --------------------------- | -------------------------------------------- | ----------------------------- |
-| `EMBEDDING_BASE_URL`      | Embedding model API base URL                 | `http://127.0.0.1:11434`   |
-| `EMBEDDING_API_KEY`       | Embedding model API key                       | -                             |
-| `EMBEDDING_MODEL`         | Embedding model name                          | -                             |
-| `EMBEDDING_MODEL_PROVIDER`| Embedding model provider (openai, ollama)    | `ollama`                    |
-| `EMBEDDING_MODEL_TYPE`    | Embedding model type                          | `embedding`                 |
-| `EMBEDDING_TEMPERATURE`   | Embedding model temperature                   | `0.3`                       |
 
-### Model Key Prefixes
-| Variable                    | Description                                  | Default                       |
-| --------------------------- | -------------------------------------------- | ----------------------------- |
-| `CHAT_MODEL_KEY_PREFIX`   | Prefix for chat model configuration          | `CHAT`                      |
-| `EMBEDDING_MODEL_KEY_PREFIX`| Prefix for embedding model configuration   | `EMBEDDING`                 |
+
+| Variable                | ion                      | Default                   |
+| ----------------------- | --------------------- | ---------------------------- |
+| `CHAT_BASE_URL`       | Chat model API           | `https://apenai.com/v1` |
+| `CHAT_API_KEY`        | Chat model API               | -                     |
+| `CHAT_MODEL`          | Chat model name                 g1`                |
+| `CHAT_MODEL_PROVIDER` | Chat model provr (openlama) | `i`                 |
+| `CHAT_MODEL_TYPE`     | Chat model type                     |                     |
+| `CHAT_TEMPERATURE`    | Chat model temperature               | `0.3`                       |
+
+ 
+-
+### Embedd ing Model C onfiguration
+- 
+| Variable                       | Description                        | Default                  |
+| --------------------------  -- | ------------------------------------------------------------- |
+| `EMBEDDING_BASE_URL`         | Embedding model APIe URL              | p://127.0.0.111434` |
+| `EMBEDDING_API_KEY`          | Embedding model API key               |-                   |
+| `EMBEDDING_MODEL`           | Embedding model nam                                             |
+| `EMBEDDING_MODEL_PROVIDER`  | Embedding model provider (enai, ollama) |ollama`                |
+
+| `EMBEDDING_MODEL_TYPE`     |    Embedding model type                      mbedding`  |
+| --`EMBEDDING_TEMPERATU-
+RE`    | Embedding model    temperature               | `0.3`                |
+    
+##---# Model Key Prefixes
+   
+
+| Variable                        | Description                            | Defau
+| ------------------------------ | ------------------------------------------- |
+| `CHAT_MODEL_KEY_PREFIX`      | Prefix for chat model configuration       |
+
+| `EMBEDDING_MODEL_KEY_PREFIX` | Prefix for embedding model configuration | `
 
 ### General Settings
-| Variable                | Description                                  | Default                       |
-| ----------------------- | -------------------------------------------- | ----------------------------- |
-| `SYSTEM_PROMPT`       | Custom system prompt                         | -                             |
-| `MAX_MEMORY_MESSAGES` | Maximum number of messages to keep in memory | `20`                        |
-| `LANG`                | Interface language (zh/en)                   | `zh`                        |
 
-### Model Configuration Prefixes
+| Variable                | Description                                  | De
+| ----------------------- | -------------------------------------------- | ------- |
+| `SYSTEM_PROMPT`       | Custom system prompt                         | -       |
+| `MAX_MEMORY_MESSAGES` | Maximum number of messages to ep in memory | `20`  |
+| `LANG`                | Interface language (zh/en)                   | `zh`  |
+
+### Model Configurati
+on Prefixes
 
 The model factory supports flexible configuration using prefixes:
 
-- `CHAT_MODEL_KEY_PREFIX` - For chat model configuration
-- `TOOL_MODEL_KEY_PREFIX` - For tool model configuration  
+- `CHAT_MODEL_KEY_PRE
+FIX` - For chat model configuration
+- `TOOL_MODEL_KEY_PREFIX` - For tool model configuration
 - `EMBEDDING_MODEL_KEY_PREFIX` - For embedding model configuration
 
 Each prefix supports:
+
 - `{PREFIX}_MODEL` - Model name
 - `{PREFIX}_MODEL_PROVIDER` - Provider (openai, anthropic, etc.)
 - `{PREFIX}_MODEL_TYPE` - Type (chat, embedding)
@@ -287,19 +305,19 @@ black src/
 flake8 src/
 ```
 
-### Building Distribution
-
-```bash
+###XBuilding Distribution
+X
+```Xash
 python -m build
 ```
-
-## TODO - Feature Roadmap
-
+X
+## XODO - Feature Roadmap
+X
 ### 🎯 Core Features
 
-- [x] **Codebase & Indexing**: ✅ Implemented codebase analysis and intelligent indexing
-- [x] **Multi-language Support**: ✅ Built-in internationalization (i18n) support
-- [x] **Dual Model Architecture**: ✅ Separate models for chat and tool operations
+- [X] **Codebase & Indexing**: ✅ Implemented codebase analysis and intelligent indexing
+- [X] **Multi-language Support**: ✅ Built-in internationalization (i18n) support
+- [X] **Dual Model Architecture**: ✅ Separate models for chat and tool operations
 - [ ] **Enhanced Web Search**: Improve web search tools with better result filtering and integration
 - [ ] **Message & Operation Memory**: Advanced message memorization and operation history tracking
 - [ ] **IDE Plugin Development**: Create plugins for popular IDEs (VS Code, IntelliJ, etc.)
