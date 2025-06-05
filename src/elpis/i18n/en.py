@@ -21,4 +21,6 @@ Interactive Commands:
 
 CODEBASE_START_INDEX = 'Start indexing: '
 
-CODEBASE_FINISH_INDEX = 'Index finished! Index completed! Processing {} code blocks in total.'
+CODEBASE_FINISH_INDEX = 'Codebase index finished! Index completed! Processing {} code blocks in total.'
+
+NO_CODEBASE_INDEXED = "The EMBEDDING_MODEL_KEY_PREFIX environment variable is not configured to use codebase."

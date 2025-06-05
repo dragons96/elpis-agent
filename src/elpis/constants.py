@@ -1,4 +1,4 @@
-from elpis.i18n.en import WELCOME_INFO
+from .i18n.en import WELCOME_INFO
 AI_AGENT_NAME = 'Elpis'
 
 # 系统级别的提示词

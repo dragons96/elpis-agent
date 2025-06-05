@@ -12,6 +12,10 @@
 - 🔧 **工具集成**: 内置多种开发工具和功能
 - 🎯 **持续对话**: 支持多轮对话，保持上下文
 - ⚙️ **可配置**: 支持自定义模型、温度等参数
+- 🔍 **代码库索引**: 智能代码库索引和语义搜索功能
+- 🌐 **多语言支持**: 内置国际化(i18n)支持，支持中英文界面
+- 🏗️ **双模型架构**: 分离聊天模型和工具模型，优化性能和成本
+- 🏭 **模型工厂**: 灵活的模型初始化和配置系统
 
 ## 安装
 
@@ -65,11 +69,33 @@ cp .env.example .env
 编辑 `.env` 文件，填入必要的配置：
 
 ```env
-OPENAI_API_KEY=your_openai_api_key_here
-OPENAI_BASE_URL=https://api.openai.com/v1  # 可选，自定义 API 端点
-MODEL=gpt-4o
-TEMPERATURE=0.3
+# 聊天模型配置
+CHAT_BASE_URL=https://api.openai.com/v1
+CHAT_API_KEY=your_openai_api_key_here
+CHAT_MODEL=gpt-4o
+CHAT_MODEL_PROVIDER=openai
+CHAT_MODEL_TYPE=chat
+CHAT_TEMPERATURE=0.3
+
+# 嵌入模型配置（用于代码库索引）
+EMBEDDING_BASE_URL=http://localhost:11434
+EMBEDDING_MODEL=nomic-embed-text
+EMBEDDING_MODEL_PROVIDER=ollama
+EMBEDDING_MODEL_TYPE=embedding
+
+# 模型配置前缀
+CHAT_MODEL_KEY_PREFIX=CHAT
+EMBEDDING_MODEL_KEY_PREFIX=EMBEDDING
+
+# 通用设置
 SYSTEM_PROMPT=  # 可选，自定义系统提示词
+MAX_MEMORY_MESSAGES=20
+LANG=zh  # 界面语言：zh（中文）或 en（英文）
+
+# 已弃用的配置（为了向后兼容）
+# OPENAI_API_KEY=your_openai_api_key_here  # 已弃用，请使用 CHAT_API_KEY
+# MODEL=gpt-4o  # 已弃用，请使用 CHAT_MODEL
+# TEMPERATURE=0.3  # 已弃用，请使用 CHAT_TEMPERATURE
 ```
 
 ## 使用方法
@@ -115,7 +141,10 @@ src/elpis/
 ├── agent.py             # 核心 Agent 类
 ├── tools.py             # 工具函数集合
 ├── prompts.py           # 提示词模板
-└── constants.py         # 常量定义
+├── constants.py         # 常量和配置
+├── codebase.py          # 代码库索引和语义搜索
+├── model_factory.py     # 模型工厂，用于灵活初始化
+└── i18n/                # 国际化支持 (包含 en.py, zh.py)
 ```
 
 ## 核心组件
@@ -124,9 +153,36 @@ src/elpis/
 
 核心的 AI 代理类，负责：
 
-- 管理与大语言模型的交互
+- 管理与大语言模型的交互（支持双模型架构）
 - 处理工具调用和消息流
 - 维护对话上下文
+- 集成代码库索引和搜索功能
+
+### CodebaseIndexer
+
+代码库索引器，提供：
+
+- 智能代码库扫描和索引
+- 基于嵌入的语义搜索
+- 支持多种编程语言
+- 自动忽略 .gitignore 文件中的内容
+
+### Model Factory
+
+模型工厂系统，支持：
+
+- 灵活的模型配置和初始化
+- 多提供商支持（OpenAI、Ollama等）
+- 基于前缀的配置系统
+- 聊天模型和嵌入模型的分离管理
+
+### 国际化 (i18n)
+
+多语言支持系统：
+
+- 支持中文和英文界面
+- 动态语言切换
+- 可扩展的语言包系统
 
 ### 内置工具
 
@@ -169,13 +225,40 @@ def your_new_tool(param: str) -> str:
 
 ## 配置说明
 
-| 环境变量            | 说明             | 默认值     | 必需 |
-| ------------------- | ---------------- | ---------- | ---- |
-| `OPENAI_API_KEY`  | OpenAI API 密钥  | -          | ✅   |
-| `OPENAI_BASE_URL` | API 端点 URL     | -          | ❌   |
-| `MODEL`           | 使用的模型名称   | `gpt-4o` | ❌   |
-| `TEMPERATURE`     | 模型温度参数     | `0.3`    | ❌   |
-| `SYSTEM_PROMPT`   | 自定义系统提示词 | -          | ❌   |
+### 聊天模型配置
+
+| 环境变量                | 说明              | 默认值     | 必需 |
+| ----------------------- | ----------------- | ---------- | ---- |
+| `CHAT_BASE_URL`       | 聊天模型 API 端点 | -          | ❌   |
+| `CHAT_API_KEY`        | 聊天模型 API 密钥 | -          | ✅   |
+| `CHAT_MODEL`          | 聊天模型名称      | `gpt-4o` | ❌   |
+| `CHAT_MODEL_PROVIDER` | 聊天模型提供商    | `openai` | ❌   |
+| `CHAT_MODEL_TYPE`     | 聊天模型类型      | `chat`   | ❌   |
+| `CHAT_TEMPERATURE`    | 聊天模型温度      | `0.3`    | ❌   |
+
+### 嵌入模型配置
+
+| 环境变量                     | 说明              | 默认值                     | 必需 |
+| ---------------------------- | ----------------- | -------------------------- | ---- |
+| `EMBEDDING_BASE_URL`       | 嵌入模型 API 端点 | `http://localhost:11434` | ❌   |
+| `EMBEDDING_MODEL`          | 嵌入模型名称      | `nomic-embed-text`       | ❌   |
+| `EMBEDDING_MODEL_PROVIDER` | 嵌入模型提供商    | `ollama`                 | ❌   |
+| `EMBEDDING_MODEL_TYPE`     | 嵌入模型类型      | `embedding`              | ❌   |
+
+### 模型密钥前缀
+
+| 环境变量                       | 说明             | 默认值        | 必需 |
+| ------------------------------ | ---------------- | ------------- | ---- |
+| `CHAT_MODEL_KEY_PREFIX`      | 聊天模型配置前缀 | `CHAT`      | ❌   |
+| `EMBEDDING_MODEL_KEY_PREFIX` | 嵌入模型配置前缀 | `EMBEDDING` | ❌   |
+
+### 通用设置
+
+| 环境变量                | 说明             | 默认值 | 必需 |
+| ----------------------- | ---------------- | ------ | ---- |
+| `SYSTEM_PROMPT`       | 自定义系统提示词 | -      | ❌   |
+| `MAX_MEMORY_MESSAGES` | 最大记忆消息数   | `20` | ❌   |
+| `LANG`                | 界面语言         | `zh` | ❌   |
 
 ## 🚧 TODO 功能规划
 
@@ -183,10 +266,12 @@ def your_new_tool(param: str) -> str:
 
 ### 📚 代码库与索引功能
 
-- [ ] **代码库分析**: 自动分析项目结构和依赖关系
-- [ ] **智能索引**: 建立代码语义索引，支持快速检索
+- [X] **代码库分析**: ✅ 自动分析项目结构和依赖关系
+- [X] **智能索引**: ✅ 建立代码语义索引，支持快速检索
 - [ ] **上下文感知**: 基于代码库上下文提供更精准的建议
 - [ ] **跨文件引用**: 智能识别和处理跨文件的代码引用关系
+- [ ] **高级代码库功能**: 代码依赖图、重构建议、代码质量分析
+- [ ] **增量索引**: 支持文件变更的增量索引更新
 
 ### 🌐 联网搜索工具完善
 
@@ -211,10 +296,13 @@ def your_new_tool(param: str) -> str:
 
 ### 🎯 其他计划功能
 
-- [ ] **多语言支持**: 扩展对更多编程语言的支持
+- [X] **多语言支持**: ✅ 内置国际化(i18n)支持，支持中英文界面
+- [X] **双模型架构**: ✅ 分离聊天模型和工具模型，优化性能和成本
+- [ ] **多提供商支持**: 扩展对更多 AI 提供商的支持
 - [ ] **代码审查**: 自动代码审查和质量检查
 - [ ] **测试生成**: 智能生成单元测试和集成测试
 - [ ] **文档生成**: 自动生成代码文档和 API 文档
+- [ ] **代码库索引指南**: 提供代码库索引的最佳实践和使用指南
 
 > 💡 **贡献提示**: 如果您对以上功能感兴趣或有其他建议，欢迎提交 Issue 或 Pull Request！
 

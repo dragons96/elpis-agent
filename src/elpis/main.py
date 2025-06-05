@@ -27,7 +27,8 @@ def main(
     print(lang.WELCOME_INFO, flush=True)
 
     # initialize codebase
-    tools.init_codebase(os.getcwd())
+    if os.getenv('EMBEDDING_MODEL_KEY_PREFIX'):
+        tools.init_codebase(os.getcwd())
 
     agent = ElpisAgent()
     question = input("[You]: ")
@@ -41,7 +42,13 @@ def main(
             question = input("[You]: ")
             continue
         if question.lower() in ('i', 'index'):
+            if not tools.codebase:
+                print(lang.NO_CODEBASE_INDEXED)
+                question = input("[You]: ")
+                continue
             tools.codebase.index_codebase()
+            question = input("[You]: ")
+            continue
         content += question + '\n'
         question = input("[You]: ")
 

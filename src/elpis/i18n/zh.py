@@ -65,4 +65,6 @@ USAGE_ZH = f"""Elpis Agent - 超轻量级 AI 编码助手
 
 CODEBASE_START_INDEX = '开始索引: '
 
-CODEBASE_FINISH_INDEX = '索引完成! 共处理 {} 个代码块.'
+CODEBASE_FINISH_INDEX = '代码库索引完成! 共处理 {} 个代码块.'
+
+NO_CODEBASE_INDEXED = "没有配置 EMBEDDING_MODEL_KEY_PREFIX 环境变量, 无法对代码库进行索引."
