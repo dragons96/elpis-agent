@@ -1,9 +1,10 @@
 import os
 
-from langchain_core.language_models import BaseChatModel
-from . import tools, constants, prompts
-from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
 from langchain.chat_models import init_chat_model
+from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
+
+from . import tools, constants, prompts
 
 
 class ElpisAgent:
@@ -30,12 +31,24 @@ class ElpisAgent:
         if system_prompt:
             self._messages.append(SystemMessage(system_prompt))
 
+    def _model_invoke(self):
+        next_message = None
+        start = True
+        for chunk in self._agent_model.stream(self._messages):
+            self._output_stream(chunk, start=start)
+            start = False
+            if next_message is None:
+                next_message = chunk
+            else:
+                next_message += chunk
+        print()
+        self._messages.append(next_message)
+        return next_message
+
     def ask(self, question: str):
         self._messages.append(HumanMessage(question))
-        next_message = self._agent_model.invoke(self._messages)
+        next_message = self._model_invoke()
 
-        self._output(next_message)
-        self._messages.append(next_message)
         while next_message.content != prompts.DONE:
 
             for tool_call in next_message.tool_calls:
@@ -44,12 +57,14 @@ class ElpisAgent:
                 self._messages.append(tool_msg)
 
             self._messages.append(HumanMessage(prompts.NextStepPrompt))
+            next_message = self._model_invoke()
 
-            next_message = self._agent_model.invoke(self._messages)
-
-            self._output(next_message)
-            self._messages.append(next_message)
+    def _output_stream(self, message: BaseMessage, start: bool = False):
+        if message.content and message.content != prompts.DONE:
+            if start:
+                print(f"[{self.__name__}]: ", end="", flush=True)
+            print(message.content, end="", flush=True)
 
     def _output(self, message: BaseMessage):
         if message.content and message.content != prompts.DONE:
-            print(f"[{self.__name__}]: {message.content}")
+            print(f"[{self.__name__}]: {message.content}", flush=True)

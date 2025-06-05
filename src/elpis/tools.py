@@ -28,7 +28,7 @@ def read_file(
     :param explanation: One sentence explanation as to why this tool is being used, and how it contributes to the goal.
     """
     if explanation:
-        print(f"[{constants.AI_AGENT_NAME}] {explanation}")
+        print(f"[{constants.AI_AGENT_NAME}] {explanation}", flush=True)
 
     if not os.path.exists(target_file):
         return f"File {target_file} does not exist."
@@ -92,10 +92,10 @@ def run_terminal_cmd(
 
     # Output explanation if provided
     if explanation:
-        print(f"[{constants.AI_AGENT_NAME}] {explanation}")
+        print(f"[{constants.AI_AGENT_NAME}] {explanation}", flush=True)
 
     # Display proposed command
-    print(f"[Proposed Command]: {command}")
+    print(f"[Proposed Command]: {command}", flush=True)
     if require_user_approval:
         user_input = input("Do you want to run this command? (y/n): ").strip().lower()
         if user_input not in ("y", "yes"):
@@ -117,7 +117,7 @@ def run_terminal_cmd(
                 activate_script = os.path.join(venv_path, "Scripts", "activate")
                 activate_cmd = activate_script
 
-            print(f"[Info] Activating virtual environment at {venv_path}...")
+            print(f"[{constants.AI_AGENT_NAME}] Activating virtual environment at {venv_path}...", flush=True)
 
             # Wrap original command with activation
             if os.name == 'posix':
@@ -142,6 +142,7 @@ def run_terminal_cmd(
         else:
             # Run synchronously and capture output
             result = subprocess.run(args, capture_output=True, text=True, check=True, shell=True)
+            print(f"[Command Output] {result.stdout}{result.stderr}", flush=True)
             return result.stdout + result.stderr
 
     except Exception as e:
@@ -163,7 +164,7 @@ def list_dir(
     :return:
     """
     if explanation:
-        print(f"[{constants.AI_AGENT_NAME}] {explanation}")
+        print(f"[{constants.AI_AGENT_NAME}] {explanation}", flush=True)
 
     # Construct full path
     full_path = os.path.join(os.getcwd(), relative_workspace_path)
@@ -222,7 +223,7 @@ def grep_search(
     :return:
     """
     if explanation:
-        print(f"[{constants.AI_AGENT_NAME}] {explanation}")
+        print(f"[{constants.AI_AGENT_NAME}] {explanation}", flush=True)
 
         # Build base command
     command = ["rg", "--color=never"]
@@ -281,7 +282,7 @@ def edit_file(
     :return:
     """
 
-    print(f"[{constants.AI_AGENT_NAME}] {instructions}")
+    print(f"[{constants.AI_AGENT_NAME}] {instructions}", flush=True)
 
     if not os.path.exists(target_file):
         return f"File {target_file} does not exist."
@@ -432,7 +433,7 @@ def file_search(
     :return:
     """
     if explanation:
-        print(f"[{constants.AI_AGENT_NAME}] {explanation}")
+        print(f"[{constants.AI_AGENT_NAME}] {explanation}", flush=True)
 
         # Normalize query for case-insensitive matching
     query_lower = query.lower()
@@ -482,7 +483,7 @@ def create_file(
     :return:
     """
     if explanation:
-        print(f"[{constants.AI_AGENT_NAME}] {explanation}")
+        print(f"[{constants.AI_AGENT_NAME}] {explanation}", flush=True)
 
     full_path = os.path.abspath(target_file)
 
@@ -520,7 +521,7 @@ def delete_file(
     :return:
     """
     if explanation:
-        print(f"[{constants.AI_AGENT_NAME}] {explanation}")
+        print(f"[{constants.AI_AGENT_NAME}] {explanation}", flush=True)
 
     full_path = os.path.abspath(target_file)
 
