@@ -160,17 +160,60 @@ elpis-agent/
 └── LICENSE                  # License file
 ```
 
+## Agent Workflow
+
+```mermaid
+flowchart TD
+    A[Start Application] --> B[Load Environment Variables]
+    B --> C[Initialize Language Settings]
+    C --> D{Embedding Model Available?}
+    D -->|Yes| E[Initialize Codebase Indexer]
+    D -->|No| F[Skip Codebase Indexing]
+    E --> G[Create ElpisAgent Instance]
+    F --> G
+    G --> H[Wait for User Input]
+    
+    H --> I{Input Type?}
+    I -->|'q' or 'quit'| Z[Exit Application]
+    I -->|'i' or 'index'| J{Codebase Available?}
+    I -->|Question/Command| K[Add User Message]
+    
+    J -->|Yes| L[Index Codebase]
+    J -->|No| M[Show No Codebase Message]
+    L --> H
+    M --> H
+    
+    K --> N[Invoke Chat Model]
+    N --> O[Stream Response to User]
+    O --> P{Response Contains Tool Calls?}
+    
+    P -->|No| Q{Response is 'DONE'?}
+    P -->|Yes| R[Execute Tool Calls]
+    
+    Q -->|Yes| H
+    Q -->|No| S[Add Next Step Prompt]
+    S --> N
+    
+    R --> T[Process Tool Results]
+    T --> U[Add Tool Messages]
+    U --> S
+    
+    style A fill:#e1f5fe
+    style Z fill:#ffebee
+    style N fill:#f3e5f5
+    style R fill:#e8f5e8
+```
+
 ## Core Components
 
 ### ElpisAgent
 
-The main agent class that handles:
+The core AI agent class responsible for:
 
-- Message management with configurable history limits
-- Tool integration and execution
-- Model interaction and response generation
-- Context preservation across conversations
-- Dual model architecture support (separate chat and tool models)
+- Managing interactions with large language models (supports dual-model architecture)
+- Handling tool calls and message flows
+- Maintaining conversation context
+- Integrating codebase indexing and search capabilities
 
 ### CodebaseIndexer
 

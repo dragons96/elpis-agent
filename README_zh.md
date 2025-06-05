@@ -147,6 +147,50 @@ src/elpis/
 └── i18n/                # 国际化支持 (包含 en.py, zh.py)
 ```
 
+## Agent 工作流程
+
+```mermaid
+flowchart TD
+    A[启动应用] --> B[加载环境变量]
+    B --> C[初始化语言设置]
+    C --> D{嵌入模型可用?}
+    D -->|是| E[初始化代码库索引器]
+    D -->|否| F[跳过代码库索引]
+    E --> G[创建 ElpisAgent 实例]
+    F --> G
+    G --> H[等待用户输入]
+    
+    H --> I{输入类型?}
+    I -->|'q' 或 'quit'| Z[退出应用]
+    I -->|'i' 或 'index'| J{代码库可用?}
+    I -->|问题/命令| K[添加用户消息]
+    
+    J -->|是| L[索引代码库]
+    J -->|否| M[显示无代码库消息]
+    L --> H
+    M --> H
+    
+    K --> N[调用聊天模型]
+    N --> O[流式输出响应]
+    O --> P{响应包含工具调用?}
+    
+    P -->|否| Q{响应是 'DONE'?}
+    P -->|是| R[执行工具调用]
+    
+    Q -->|是| H
+    Q -->|否| S[添加下一步提示]
+    S --> N
+    
+    R --> T[处理工具结果]
+    T --> U[添加工具消息]
+    U --> S
+    
+    style A fill:#e1f5fe
+    style Z fill:#ffebee
+    style N fill:#f3e5f5
+    style R fill:#e8f5e8
+```
+
 ## 核心组件
 
 ### ElpisAgent
