@@ -1,6 +1,6 @@
 [project]
 name = "elpis-agent"
-version = "0.0.3"
+version = "0.0.4"
 description = "An agent named elpis, imitating cursor."
 readme = "README.md"
 license = { text = "MIT" }
@@ -21,8 +21,15 @@ dependencies = [
     "pydantic>=2.11.5",
 ]
 
+[project.optional-dependencies]
+ui = [
+    "langgraph-cli[inmem]>=0.2.12",
+]
+
+
 [project.scripts]
 elpis = "elpis.main:main"
+elpis-ui = "elpis.ui.graph_main:dev"
 
 [tool.coverage.run]
 branch = true

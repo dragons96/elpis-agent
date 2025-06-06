@@ -8,7 +8,8 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.vectorstores import InMemoryVectorStore, VectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter, Language
 
-from elpis import i18n, model_factory
+from elpis import i18n
+from elpis.factories import model_factory
 
 
 class CodebaseIndexer:

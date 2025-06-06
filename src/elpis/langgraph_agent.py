@@ -1,20 +1,18 @@
-import os
 import hashlib
-import sqlite3
-from pathlib import Path
+import os
 from typing import Annotated, Sequence, TypedDict
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph, END
-from langgraph.prebuilt import ToolNode
-from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph.message import add_messages
+from langgraph.prebuilt import ToolNode
 from langgraph.types import interrupt, Command
-from elpis.i18n import en
 
-from elpis import tools, constants, prompts, model_factory
+from elpis import tools, constants, prompts
+from elpis.factories import model_factory, checkpointer_factory
+from elpis.i18n import en
 
 
 class AgentState(TypedDict):
@@ -60,7 +58,11 @@ class LangGraphElpisAgent:
 
         # Initialize session ID and SQLite memory
         self._session_id = session_id or self._generate_session_id()
-        self._memory = self._init_sqlite_memory()
+
+        # Initialize checkpointer
+        self._memory = checkpointer_factory.new_checkpointer(
+            os.getenv('CHECKPOINTER')
+        )
 
         # Build the graph
         self._graph = self._build_graph()
@@ -108,22 +110,6 @@ class LangGraphElpisAgent:
 
         # Compile with checkpointer for memory
         return workflow.compile(checkpointer=self._memory)
-
-    def _init_sqlite_memory(self) -> SqliteSaver:
-        """Initialize SQLite database for memory storage."""
-        # Create .elpis directory if it doesn't exist
-        elpis_dir = Path(os.getcwd()) / ".elpis"
-        elpis_dir.mkdir(exist_ok=True)
-
-        # Create SQLite database file path
-        db_path = elpis_dir / "memory.db"
-
-        # Create SQLite connection
-        # check_same_thread=False is OK as SqliteSaver uses locks for thread safety
-        conn = sqlite3.connect(str(db_path), check_same_thread=False)
-
-        # Initialize and return SqliteSaver
-        return SqliteSaver(conn)
 
     def _generate_session_id(self) -> str:
         """Generate a unique session ID based on timestamp."""
@@ -308,3 +294,7 @@ class LangGraphElpisAgent:
         """Output complete message - maintains the same interface as ElpisAgent."""
         if message.content and message.content != END:
             print(f"[{self.__name__}]: {message.content}", flush=True)
+
+    @property
+    def graph(self):
+        return self._graph

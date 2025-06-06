@@ -19,28 +19,57 @@
 - 🏭 **模型工厂**: 灵活的模型初始化和配置系统
 - ✅ **用户确认**: 对危险操作（文件创建/删除、命令执行）进行交互式确认
 
-## 安装
+## 快速开始（推荐）
 
-### 快速开始使用 uvx（推荐）
+### 使用 uvx 运行（无需安装）
 
-您可以使用 `uvx` 直接运行 Elpis Agent，无需安装：
+使用 Elpis Agent 最简单的方式是通过 `uvx`，无需本地安装：
 
 ```bash
-uvx --no-cache --from https://github.com/dragons96/elpis-agent.git elpis --env_file /path/to/.env --lang [en|zh]
+# 从 PyPI
+uvx --from elpis-agent elpis --env_file /path/to/.env --lang [en|zh]
+# 从 GitHub
+uvx --from https://github.com/dragons96/elpis-agent.git elpis --env_file /path/to/.env --lang [en|zh]
+
+# 从 Gitee
+uvx --from https://gitee.com/dragons96/elpis-agent.git elpis --env_file /path/to/.env --lang [en|zh]
 ```
 
 此命令将：
-
 - 自动下载并运行最新版本的 elpis-agent
 - 使用您的自定义环境配置文件
 - 无需本地安装或虚拟环境设置
+- 始终获得最新功能和错误修复
+
+您也可以使用 `uvx` 直接运行 UI 界面，无需本地安装：
+
+```bash
+# 从 PyPI
+uvx --from elpis-agent[ui] elpis-ui --env_file /path/to/.env --lang [en|zh]
+# 从 GitHub
+uvx --from https://github.com/dragons96/elpis-agent.git --with langgraph-cli[inmem] elpis-ui --env_file /path/to/.env --lang [en|zh]
+
+# 从 Gitee
+uvx --from https://gitee.com/dragons96/elpis-agent.git --with langgraph-cli[inmem] elpis-ui --env_file /path/to/.env --lang [en|zh]
+```
+
+这将：
+- 自动下载并运行最新版本的 UI 界面
+- 使用您的自定义环境配置文件
+- 无需本地安装或虚拟环境设置
+- 在浏览器中打开 Web 界面进行交互
 
 ### 环境要求
 
 - Python >= 3.11
 - OpenAI API Key
+- 创建包含配置的 `.env` 文件（参见下方配置部分）
 
-### 安装步骤
+## 开发环境设置
+
+### 二次开发使用
+
+如果您想要修改代码或为项目贡献，请按照以下步骤：
 
 1. 克隆项目
 
@@ -68,7 +97,9 @@ uv pip install -e .
 cp .env.example .env
 ```
 
-编辑 `.env` 文件，填入必要的配置：
+## 配置
+
+创建 `.env` 文件，填入必要的配置：
 
 ```env
 # 聊天模型配置
@@ -102,7 +133,7 @@ LANG=zh  # 界面语言：zh（中文）或 en（英文）
 
 ## 使用方法
 
-### 基本使用
+### 命令行界面
 
 安装完成后，可以直接使用 `elpis` 命令启动：
 
@@ -110,11 +141,35 @@ LANG=zh  # 界面语言：zh（中文）或 en（英文）
 elpis
 ```
 
-或者使用 Python 模块方式：
+或者使用 uv 运行：
 
 ```bash
-python -m elpis.main
+uv run elpis
 ```
+
+### UI 界面
+
+Elpis Agent 还提供了基于 Web 的 UI 界面，方便用户交互：
+
+#### 本地安装运行
+
+安装完成后，可以使用以下命令启动 UI 界面：
+
+```bash
+elpis-ui
+```
+
+或者使用 uv 运行：
+
+```bash
+uv run elpis-ui
+```
+
+这将：
+- 自动下载并运行最新版本的 UI 界面
+- 使用您的自定义环境配置文件
+- 无需本地安装或虚拟环境设置
+- 在浏览器中打开 Web 界面进行交互
 
 ### 指定配置文件
 
@@ -283,14 +338,6 @@ black src/
 flake8 src/
 mypy src/
 
-# 运行测试
-pytest
-
-# 运行 SQLite 记忆化测试
-python test_sqlite_memory.py
-
-# 测试用户确认功能
-python test_user_confirmation.py
 ```
 
 ### 添加新工具

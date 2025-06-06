@@ -22,31 +22,60 @@ An ultra-lightweight command-line AI coding assistant tool that mimics Cursor im
 - 💾 **Session Management**: Automatic session isolation and memory persistence using LangGraph checkpoints
 - ✅ **User Confirmation**: Interactive confirmation for dangerous operations (file creation/deletion, command execution)
 
-## Installation
+## Quick Start (Recommended)
 
-### Quick Start with uvx (Recommended)
+### Run with uvx (No Installation Required)
 
-You can also run Elpis Agent directly without installation using `uvx`:
+The easiest way to use Elpis Agent is with `uvx`, which requires no local installation:
 
 ```bash
-# github
+# From PyPI
+uvx --from elpis-agent elpis --env_file /path/to/.env --lang [en|zh]
+
+# From GitHub
 uvx --no-cache --from https://github.com/dragons96/elpis-agent.git elpis --env_file /path/to/.env --lang [en|zh]
-# gitee
-uvx --no-cache --from uvx --no-cache --from https://gitee.com/dragons96/elpis-agent.git elpis --env_file /path/to/.env --lang [en|zh]
+
+# From Gitee
+uvx --no-cache --from https://gitee.com/dragons96/elpis-agent.git elpis --env_file /path/to/.env --lang [en|zh]
 ```
 
 This command will:
-
 - Automatically download and run the latest version of elpis-agent
 - Use your custom environment file for configuration
 - No need for local installation or virtual environment setup
+- Always get the latest features and bug fixes
+
+
+You can also use 'uvx' to directly run the UI interface without the need for local installation:
+
+```bash
+# From PyPI
+uvx --from elpis-agent[ui] elpis-ui --env_file /path/to/.env --lang [en|zh]
+# From Github
+uvx --no-cache --from https://github.com/dragons96/elpis-agent.git --with langgraph-cli[inmem] elpis-ui --env_file /path/to/.env --lang [en|zh]
+
+# From Gitee
+uvx --no-cache --from https://gitee.com/dragons96/elpis-agent.git --with langgraph-cli[inmem] elpis-ui --env_file /path/to/.env --lang [en|zh]
+```
+
+This will:
+- Automatically download and run the latest version with UI interface
+- Use your custom environment file for configuration
+- No need for local installation or virtual environment setup
+- Open a web interface in your browser for interactive use
+
 
 ### Requirements
 
 - Python >= 3.11
 - OpenAI API Key
+- Create a `.env` file with your configuration (see Configuration section below)
 
-### Installation Steps
+## Development Setup
+
+### For Secondary Development
+
+If you want to modify the code or contribute to the project, follow these steps:
 
 1. Clone the repository
 
@@ -74,7 +103,9 @@ uv pip install -e .
 cp .env.example .env
 ```
 
-Edit the `.env` file and fill in the necessary configurations:
+## Configuration
+
+Create a `.env` file and fill in the necessary configurations:
 
 ```env
 # Chat Model Configuration
@@ -107,16 +138,35 @@ LANG=zh
 
 ### Command Line Interface
 
-After installation, you can start Elpis Agent using:
+You can start Elpis Agent using elpis (recommended) or after local installation:
 
 ```bash
+
 elpis
 ```
 
-Or run directly with Python:
+Or run directly with uv:
 
 ```bash
-python -m elpis.main
+uv run elpis
+```
+
+### UI Interface
+
+Elpis Agent also provides a web-based UI interface for easier interaction:
+
+#### Local Installation and Run
+
+After installation, you can start the UI interface using:
+
+```bash
+elpis-ui
+```
+
+Or run directly with UV:
+
+```bash
+uv run elpis-ui
 ```
 
 ### Interactive Commands
@@ -431,20 +481,13 @@ black src/
 flake8 src/
 ```
 
-### Running Tests
+### Building Distribution
 
 ```bash
-# Test user confirmation functionality
-python test_user_confirmation.py
-```
-
-###XBuilding Distribution
-X
-```Xash
 python -m build
 ```
-X
-## XODO - Feature Roadmap
+
+## TODO - Feature Roadmap
 X
 ### 🎯 Core Features
 
