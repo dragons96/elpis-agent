@@ -333,7 +333,10 @@ def edit_file(
             f.write(updated_content)
 
         if codebase:
-            codebase.update_file_documents(target_file)
+            try:
+                codebase.update_file_documents(target_file)
+            except Exception as e:
+                print(f"[{constants.AI_AGENT_NAME}] Failed to update file documents into codebase for {target_file}: {e}")
 
         return f"Successfully replaced code in {target_file}"
 
@@ -528,7 +531,7 @@ def create_file(
             try:
                 codebase.add_file_documents(full_path)
             except Exception as e:
-                print(f'[{constants.AI_AGENT_NAME}] Codebase add file index error.')
+                print(f"[{constants.AI_AGENT_NAME}] Failed to add file documents into codebase for {target_file}: {e}")
 
         return f"Successfully created file: {target_file}"
     except PermissionError:
@@ -567,7 +570,11 @@ def delete_file(
     try:
         os.remove(full_path)
         if codebase:
-            codebase.remove_file_documents(full_path)
+            try:
+                codebase.remove_file_documents(full_path)
+            except Exception as e:
+                print(
+                    f"[{constants.AI_AGENT_NAME}] Failed to delete file documents into codebase for {target_file}: {e}")
         return f"Successfully deleted file: {target_file}"
     except PermissionError:
         return f"[Error] Permission denied when trying to delete '{target_file}'."
