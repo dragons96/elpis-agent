@@ -40,11 +40,11 @@ uvx --no-cache --from https://gitee.com/dragons96/elpis-agent.git elpis --env_fi
 ```
 
 This command will:
+
 - Automatically download and run the latest version of elpis-agent
 - Use your custom environment file for configuration
 - No need for local installation or virtual environment setup
 - Always get the latest features and bug fixes
-
 
 You can also use 'uvx' to directly run the UI interface without the need for local installation:
 
@@ -59,11 +59,11 @@ uvx --no-cache --from https://gitee.com/dragons96/elpis-agent.git --with langgra
 ```
 
 This will:
+
 - Automatically download and run the latest version with UI interface
 - Use your custom environment file for configuration
 - No need for local installation or virtual environment setup
 - Open a web interface in your browser for interactive use
-
 
 ### Requirements
 
@@ -130,10 +130,11 @@ EMBEDDING_MODEL_KEY_PREFIX=EMBEDDING
 
 # General Settings
 SYSTEM_PROMPT=                    # Custom system prompt (optional)
+MAX_MEMORY_MESSAGES=20           # Maximum messages to keep in memory
 LANG=zh                          # Interface language (zh/en)
 
 # UI Configuration (for LangGraph UI mode)
-LANGGRAPH_API_URL=http://localhost:1024  # LangGraph UI server URL
+LANGGRAPH_API_URL=http://localhost:8123  # LangGraph UI server URL
 ```
 
 ### Configuration Notes
@@ -272,67 +273,68 @@ elpis-agent/
 ## Agent Workflow
 
 ```mermaid
-flowchart LR
-    subgraph "Application Start"
-        A[Start Application] --> B{Interface Mode?}
-    end
+flowchart TD
+    %% Application Startup Phase
+    A[Start Application] --> B{Select Interface Mode}
     
-    subgraph "CLI Mode Flow"
-        B -->|CLI Mode| C[Load Environment Variables]
-        C --> E[Initialize Language Settings]
-        E --> F{Embedding Model Available?}
-        F -->|Yes| G[Initialize Codebase Indexer]
-        F -->|No| H[Skip Codebase Indexing]
-        G --> I[Create ElpisAgent Instance]
-        H --> I
-        I --> J[Wait for User Input]
-        
-        J --> O{Input Type?}
-        O -->|'q' or 'quit'| Z[Exit Application]
-        O -->|'i' or 'index'| P{Codebase Available?}
-        O -->|Question/Command| Q[Add User Message]
-        
-        P -->|Yes| R[Index Codebase]
-        P -->|No| S[Show No Codebase Message]
-        R --> J
-        S --> J
-        
-        Q --> T[Invoke Chat Model]
-        T --> U[Stream Response to User]
-        U --> V{Response Contains Tool Calls?}
-        
-        V -->|No| W{Response is 'DONE'?}
-        V -->|Yes| X[Execute Tool Calls]
-        
-        W -->|Yes| J
-        W -->|No| Y[Add Next Step Prompt]
-        Y --> T
-        
-        X --> AA[Process Tool Results]
-        AA --> BB[Add Tool Messages]
-        BB --> Y
-    end
+    %% CLI Mode Branch
+    B -->|CLI Mode| C1[Load Environment Variables]
+    C1 --> C2[Initialize Language Settings]
+    C2 --> C3{Embedding Model Available?}
+    C3 -->|Yes| C4[Initialize Codebase Index]
+    C3 -->|No| C5[Skip Codebase Indexing]
+    C4 --> C6[Create Agent Instance]
+    C5 --> C6
+    C6 --> C7[Wait for User Input]
     
-    subgraph "UI Mode Flow"
-        B -->|UI Mode| D[Start LangGraph UI Server]
-        D --> K[Initialize LangGraph Configuration]
-        K --> L[Load Agent Graph]
-        L --> M[Start Web Interface]
-        M --> N[Wait for Web Requests]
-        
-        N --> CC[Process Web Request]
-        CC --> DD[Execute Agent Graph]
-        DD --> EE[Return Response]
-        EE --> N
-    end
+    %% CLI User Interaction Loop
+    C7 --> C8{Input Type Detection}
+    C8 -->|Exit Command| END[Exit Application]
+    C8 -->|Index Command| C9{Codebase Exists?}
+    C8 -->|User Question| C10[Process User Message]
     
-    style A fill:#e1f5fe
-    style Z fill:#ffebee
-    style T fill:#f3e5f5
-    style X fill:#e8f5e8
-    style D fill:#fff3e0
-    style M fill:#e8f5e8
-    style DD fill:#f3e5f5
+    C9 -->|Yes| C11[Execute Codebase Indexing]
+    C9 -->|No| C12[Show Prompt Message]
+    C11 --> C7
+    C12 --> C7
+    
+    %% CLI Message Processing Flow
+    C10 --> C13[Invoke Chat Model]
+    C13 --> C14[Stream Response Output]
+    C14 --> C15{Contains Tool Calls?}
+    C15 -->|No| C16{Task Completed?}
+    C15 -->|Yes| C17[Execute Tool Calls]
+    C16 -->|Yes| C7
+    C16 -->|No| C18[Add Continue Prompt]
+    C17 --> C19[Process Tool Results]
+    C18 --> C13
+    C19 --> C18
+    
+    %% UI Mode Branch
+    B -->|UI Mode| U1[Start LangGraph UI Service]
+    U1 --> U2[Initialize Configuration]
+    U2 --> U3[Load Agent Graph]
+    U3 --> U4[Start Web Interface]
+    U4 --> U5[Listen for Web Requests]
+    
+    %% UI Request Processing Loop
+    U5 --> U6[Process Web Request]
+    U6 --> U7[Execute Agent Graph]
+    U7 --> U8[Return Response Result]
+    U8 --> U5
+    
+    %% Style Definitions
+    classDef startNode fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef endNode fill:#ffebee,stroke:#c62828,stroke-width:2px
+    classDef processNode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef toolNode fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef uiNode fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    
+    class A startNode
+    class END endNode
+    class C13,C14,U7 processNode
+    class C17,C19 toolNode
+    class U1,U4,U5 uiNode
 ```
 
 ## Core Components
@@ -408,47 +410,40 @@ Environment variables can be configured in the `.env` file:
 
 ### Chat Model Configuration
 
+| Variable                | ion                                 | Default                   |
+| ----------------------- | ----------------------------------- | ------------------------- |
+| `CHAT_BASE_URL`       | Chat model API                      | `https://apenai.com/v1` |
+| `CHAT_API_KEY`        | Chat model API                      | -                         |
+| `CHAT_MODEL`          | Chat model name                 g1` |                           |
+| `CHAT_MODEL_PROVIDER` | Chat model provr (openlama)         | `i`                     |
+| `CHAT_MODEL_TYPE`     | Chat model type                     |                           |
+| `CHAT_TEMPERATURE`    | Chat model temperature              | `0.3`                   |
 
-
-| Variable                | ion                      | Default                   |
-| ----------------------- | --------------------- | ---------------------------- |
-| `CHAT_BASE_URL`       | Chat model API           | `https://apenai.com/v1` |
-| `CHAT_API_KEY`        | Chat model API               | -                     |
-| `CHAT_MODEL`          | Chat model name                 g1`                |
-| `CHAT_MODEL_PROVIDER` | Chat model provr (openlama) | `i`                 |
-| `CHAT_MODEL_TYPE`     | Chat model type                     |                     |
-| `CHAT_TEMPERATURE`    | Chat model temperature               | `0.3`                       |
-
- 
--
 ### Embedd ing Model C onfiguration
-- 
-| Variable                       | Description                        | Default                  |
-| --------------------------  -- | ------------------------------------------------------------- |
-| `EMBEDDING_BASE_URL`         | Embedding model APIe URL              | p://127.0.0.111434` |
-| `EMBEDDING_API_KEY`          | Embedding model API key               |-                   |
-| `EMBEDDING_MODEL`           | Embedding model nam                                             |
-| `EMBEDDING_MODEL_PROVIDER`  | Embedding model provider (enai, ollama) |ollama`                |
 
-| `EMBEDDING_MODEL_TYPE`     |    Embedding model type                      mbedding`  |
-| --`EMBEDDING_TEMPERATU-
-RE`    | Embedding model    temperature               | `0.3`                |
-    
-##---# Model Key Prefixes
-   
 
-| Variable                        | Description                            | Defau
-| ------------------------------ | ------------------------------------------- |
-| `CHAT_MODEL_KEY_PREFIX`      | Prefix for chat model configuration       |
+| Variable                       | Description                               | Default         |
+| ---------------------------- |-------------------------------------------|-----------------|
+| `EMBEDDING_BASE_URL`         | Embedding model APIe URL                  |                 | 
+|`EMBEDDING_API_KEY `         | Embedding model API key                   |                 | 
+|`EMBEDDING_MODEL `          | Embedding model name                      | 
+|`EMBEDDING_MODEL_PROVIDER `  | Embedding model provider (openai, ollama) |                 |
+| `EMBEDDING_MODEL_TYPE`     |    Embedding model type                      mbedding  | 
+| `EMBEDDING_TEMPERATU`   | Embedding model    temperature               |`0.3`                |
 
-| `EMBEDDING_MODEL_KEY_PREFIX` | Prefix for embedding model configuration | `
+### Model Key Prefixes
+
+| Variable                        | Description                              | Defalut |
+| ------------------------------ |------------------------------------------|-------|
+| `CHAT_MODEL_KEY_PREFIX`      | Prefix for chat model configuration      |
+| `EMBEDDING_MODEL_KEY_PREFIX` | Prefix for embedding model configuration | 
 
 ### General Settings
 
-| Variable                | Description                                  | Default |
-| ----------------------- | -------------------------------------------- | ------- |
-| `SYSTEM_PROMPT`       | Custom system prompt                         | -       |
-| `LANG`                | Interface language (zh/en)                   | `zh`    |
+| Variable          | Description                | Default |
+| ----------------- | -------------------------- | ------- |
+| `SYSTEM_PROMPT` | Custom system prompt       | -       |
+| `LANG`          | Interface language (zh/en) | `zh`  |
 
 ### Memory Configuration
 
@@ -486,12 +481,12 @@ agent.DANGEROUS_TOOLS = set()
 ```
 
 ### Model Configurati
+
 on Prefixes
 
 The model factory supports flexible configuration using prefixes:
 
-- `CHAT_MODEL_KEY_PRE
-FIX` - For chat model configuration
+- `CHAT_MODEL_KEY_PRE FIX` - For chat model configuration
 - `TOOL_MODEL_KEY_PREFIX` - For tool model configuration
 - `EMBEDDING_MODEL_KEY_PREFIX` - For embedding model configuration
 
@@ -514,7 +509,6 @@ Each prefix supports:
 4. Install in development mode: `uv pip install -e .`
 5. Install development dependencies: `uv pip install pytest black flake8`
 
-
 ### Code Formatting
 
 ```bash
@@ -529,7 +523,9 @@ python -m build
 ```
 
 ## TODO - Feature Roadmap
+
 X
+
 ### 🎯 Core Features
 
 - [X] **Codebase & Indexing**: ✅ Implemented codebase analysis and intelligent indexing

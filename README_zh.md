@@ -120,11 +120,11 @@ EMBEDDING_TEMPERATURE=0.3
 
 # 模型配置前缀
 CHAT_MODEL_KEY_PREFIX=CHAT
-# 若不需要使用Codebase, 注释 EMBEDDING_MODEL_KEY_PREFIX 的配置
 EMBEDDING_MODEL_KEY_PREFIX=EMBEDDING
 
 # 通用设置
 SYSTEM_PROMPT=                    # 自定义系统提示词（可选）
+MAX_MEMORY_MESSAGES=20           # 内存中保留的最大消息数
 LANG=zh                          # 界面语言（zh/en）
 
 # UI 配置（用于 LangGraph UI 模式）
@@ -248,67 +248,68 @@ elpis-agent/
 ## Agent 工作流程
 
 ```mermaid
-flowchart LR
-    subgraph "应用启动"
-        A[启动应用] --> B{界面模式?}
-    end
+flowchart TD
+    %% 应用启动阶段
+    A[启动应用程序] --> B{选择界面模式}
     
-    subgraph "CLI 模式流程"
-        B -->|CLI 模式| C[加载环境变量]
-        C --> E[初始化语言设置]
-        E --> F{嵌入模型可用?}
-        F -->|是| G[初始化代码库索引器]
-        F -->|否| H[跳过代码库索引]
-        G --> I[创建 ElpisAgent 实例]
-        H --> I
-        I --> J[等待用户输入]
-        
-        J --> O{输入类型?}
-        O -->|'q' 或 'quit'| Z[退出应用]
-        O -->|'i' 或 'index'| P{代码库可用?}
-        O -->|问题/命令| Q[添加用户消息]
-        
-        P -->|是| R[索引代码库]
-        P -->|否| S[显示无代码库消息]
-        R --> J
-        S --> J
-        
-        Q --> T[调用聊天模型]
-        T --> U[流式输出响应]
-        U --> V{响应包含工具调用?}
-        
-        V -->|否| W{响应是 'DONE'?}
-        V -->|是| X[执行工具调用]
-        
-        W -->|是| J
-        W -->|否| Y[添加下一步提示]
-        Y --> T
-        
-        X --> AA[处理工具结果]
-        AA --> BB[添加工具消息]
-        BB --> Y
-    end
+    %% CLI模式分支
+    B -->|CLI 模式| C1[加载环境变量]
+    C1 --> C2[初始化语言设置]
+    C2 --> C3{嵌入模型可用?}
+    C3 -->|是| C4[初始化代码库索引]
+    C3 -->|否| C5[跳过代码库索引]
+    C4 --> C6[创建 Agent 实例]
+    C5 --> C6
+    C6 --> C7[等待用户输入]
     
-    subgraph "UI 模式流程"
-        B -->|UI 模式| D[启动 LangGraph UI 服务器]
-        D --> K[初始化 LangGraph 配置]
-        K --> L[加载 Agent 图]
-        L --> M[启动 Web 界面]
-        M --> N[等待 Web 请求]
-        
-        N --> CC[处理 Web 请求]
-        CC --> DD[执行 Agent 图]
-        DD --> EE[返回响应]
-        EE --> N
-    end
+    %% CLI用户交互循环
+    C7 --> C8{输入类型判断}
+    C8 -->|退出命令| END[退出应用]
+    C8 -->|索引命令| C9{代码库存在?}
+    C8 -->|用户问题| C10[处理用户消息]
     
-    style A fill:#e1f5fe
-    style Z fill:#ffebee
-    style T fill:#f3e5f5
-    style X fill:#e8f5e8
-    style D fill:#fff3e0
-    style M fill:#e8f5e8
-    style DD fill:#f3e5f5
+    C9 -->|是| C11[执行代码库索引]
+    C9 -->|否| C12[显示提示信息]
+    C11 --> C7
+    C12 --> C7
+    
+    %% CLI消息处理流程
+    C10 --> C13[调用聊天模型]
+    C13 --> C14[流式输出响应]
+    C14 --> C15{包含工具调用?}
+    C15 -->|否| C16{任务完成?}
+    C15 -->|是| C17[执行工具调用]
+    C16 -->|是| C7
+    C16 -->|否| C18[添加继续提示]
+    C17 --> C19[处理工具结果]
+    C18 --> C13
+    C19 --> C18
+    
+    %% UI模式分支
+    B -->|UI 模式| U1[启动 LangGraph UI 服务]
+    U1 --> U2[初始化配置]
+    U2 --> U3[加载 Agent 图]
+    U3 --> U4[启动 Web 界面]
+    U4 --> U5[监听 Web 请求]
+    
+    %% UI请求处理循环
+    U5 --> U6[处理 Web 请求]
+    U6 --> U7[执行 Agent 图]
+    U7 --> U8[返回响应结果]
+    U8 --> U5
+    
+    %% 样式定义
+    classDef startNode fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef endNode fill:#ffebee,stroke:#c62828,stroke-width:2px
+    classDef processNode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef toolNode fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef uiNode fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    
+    class A startNode
+    class END endNode
+    class C13,C14,U7 processNode
+    class C17,C19 toolNode
+    class U1,U4,U5 uiNode
 ```
 
 ## 核心组件
@@ -482,6 +483,8 @@ agent.DANGEROUS_TOOLS = set()
 
 - [X] **代码库分析**: ✅ 自动分析项目结构和依赖关系
 - [X] **智能索引**: ✅ 建立代码语义索引，支持快速检索
+- [X] **多语言支持**: ✅ 内置国际化(i18n)支持，支持中英文界面
+- [X] **双模型架构**: ✅ 分离聊天模型和工具模型，优化性能-
 - [ ] **上下文感知**: 基于代码库上下文提供更精准的建议
 - [ ] **跨文件引用**: 智能识别和处理跨文件的代码引用关系
 - [ ] **高级代码库功能**: 代码依赖图、重构建议、代码质量分析
@@ -510,8 +513,6 @@ agent.DANGEROUS_TOOLS = set()
 
 ### 🎯 其他计划功能
 
-- [X] **多语言支持**: ✅ 内置国际化(i18n)支持，支持中英文界面
-- [X] **双模型架构**: ✅ 分离聊天模型和工具模型，优化性能和成本
 - [ ] **多提供商支持**: 扩展对更多 AI 提供商的支持
 - [ ] **代码审查**: 自动代码审查和质量检查
 - [ ] **测试生成**: 智能生成单元测试和集成测试
