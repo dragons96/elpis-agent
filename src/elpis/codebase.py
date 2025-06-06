@@ -33,32 +33,45 @@ class CodebaseIndexer:
             encoding='utf-8',
             autodetect_encoding=True,
         )
-        self._code_types = [
-            'cpp',
-            'go',
-            'java',
-            'kotlin',
-            'js',
-            'ts',
-            'php',
-            'proto',
-            'python',
-            'rst',
-            'ruby',
-            'rust',
-            'scala',
-            'swift',
-            'markdown',
-            'latex',
-            'html',
-            'sol',
-            'csharp',
-            'cobol',
-            'c',
-            'lua',
-            'perl',
-            'haskell'
-        ]
+        self._file_suffix_code_mapping = {
+            'py': 'python',
+            'pyi': 'python',
+            'cpp': 'cpp',
+            'go': 'go',
+            'java': 'java',
+            'kt': 'kotlin',
+            'kts': 'kotlin',
+            'js': 'js',
+            'jsx': 'js',
+            'mjs': 'js',
+            'cjs': 'js',
+            'ts': 'ts',
+            'tsx': 'ts',
+            'php': 'php',
+            'proto': 'proto',
+            'rst': 'rst',
+            'rb': 'ruby',
+            'rs': 'rust',
+            'scala': 'scala',
+            'swift': 'swift',
+            'md': 'markdown',
+            'markdown': 'markdown',
+            'tex': 'latex',
+            'latex': 'latex',
+            'html': 'html',
+            'htm': 'html',
+            'sol': 'sol',
+            'cs': 'csharp',
+            'cobol': 'cobol',
+            'c': 'c',
+            'h': 'c',  # C header files
+            'hh': 'cpp',  # C++ header files
+            'hpp': 'cpp',  # C++ header files
+            'lua': 'lua',
+            'pl': 'perl',
+            'pm': 'perl',
+            'hs': 'haskell',
+        }
         self._splitters = {}
         self._text_chunk_size = text_chunk_size
         self._text_chunk_overlap = text_chunk_overlap
@@ -72,7 +85,7 @@ class CodebaseIndexer:
             return []
 
     def _is_code_file(self, file_suffix: str):
-        return file_suffix in self._code_types
+        return file_suffix in self._file_suffix_code_mapping
 
     def get_current_gitignore_matchers(self) -> Callable[[str], bool] | None:
         default_gitignore_matchers = parse_gitignore_str(""".mypy_cache/
@@ -150,7 +163,7 @@ node_modules/
         if not current_documents:
             return []
 
-        splitter_key = file_suffix if self._is_code_file(file_suffix) else 'text'
+        splitter_key = self._file_suffix_code_mapping[file_suffix] if file_suffix in self._file_suffix_code_mapping else 'text'
         splitter = self._splitters.get(file_suffix)
         if splitter is None:
             if splitter_key == 'text':
@@ -162,7 +175,7 @@ node_modules/
                 )
             else:
                 splitter = RecursiveCharacterTextSplitter.from_language(
-                    Language(file_suffix),
+                    Language(splitter_key),
                     chunk_size=self._code_chunk_size,
                     chunk_overlap=self._code_chunk_overlap,
                 )
@@ -171,11 +184,11 @@ node_modules/
         current_documents = splitter.split_documents(current_documents)
 
         # 更新 mtime 记录
-        if not self._vectorstore:
+        if self._embeddings and not self._vectorstore:
             self._vectorstore = self._vector_store_cls.from_documents(current_documents, self._embeddings)
         else:
             self._vectorstore.add_documents(current_documents)
-        return splitter.split_documents(current_documents)
+        return current_documents
 
     def remove_file_documents(self, file_path: str):
         if not self._vectorstore:

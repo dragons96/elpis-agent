@@ -530,7 +530,10 @@ def create_file(
             f.write(initial_content)
 
         if codebase:
-            codebase.add_file_documents(full_path)
+            try:
+                codebase.add_file_documents(full_path)
+            except Exception as e:
+                print('Codebase add file index error.')
 
         return f"Successfully created file: {target_file}"
     except PermissionError:
