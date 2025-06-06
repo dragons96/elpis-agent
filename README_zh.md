@@ -36,6 +36,7 @@ uvx --from https://gitee.com/dragons96/elpis-agent.git elpis --env_file /path/to
 ```
 
 此命令将：
+
 - 自动下载并运行最新版本的 elpis-agent
 - 使用您的自定义环境配置文件
 - 无需本地安装或虚拟环境设置
@@ -54,6 +55,7 @@ uvx --from https://gitee.com/dragons96/elpis-agent.git --with langgraph-cli[inme
 ```
 
 这将：
+
 - 自动下载并运行最新版本的 UI 界面
 - 使用您的自定义环境配置文件
 - 无需本地安装或虚拟环境设置
@@ -173,6 +175,7 @@ uv run elpis-ui
 ```
 
 这将：
+
 - 自动下载并运行最新版本的 UI 界面
 - 使用您的自定义环境配置文件
 - 无需本地安装或虚拟环境设置
@@ -251,7 +254,7 @@ elpis-agent/
 flowchart TD
     %% 应用启动阶段
     A[启动应用程序] --> B{选择界面模式}
-    
+  
     %% CLI模式分支
     B -->|CLI 模式| C1[加载环境变量]
     C1 --> C2[初始化语言设置]
@@ -261,18 +264,18 @@ flowchart TD
     C4 --> C6[创建 Agent 实例]
     C5 --> C6
     C6 --> C7[等待用户输入]
-    
+  
     %% CLI用户交互循环
     C7 --> C8{输入类型判断}
     C8 -->|退出命令| END[退出应用]
     C8 -->|索引命令| C9{代码库存在?}
     C8 -->|用户问题| C10[处理用户消息]
-    
+  
     C9 -->|是| C11[执行代码库索引]
     C9 -->|否| C12[显示提示信息]
     C11 --> C7
     C12 --> C7
-    
+  
     %% CLI消息处理流程
     C10 --> C13[调用聊天模型]
     C13 --> C14[流式输出响应]
@@ -284,27 +287,27 @@ flowchart TD
     C17 --> C19[处理工具结果]
     C18 --> C13
     C19 --> C18
-    
+  
     %% UI模式分支
     B -->|UI 模式| U1[启动 LangGraph UI 服务]
     U1 --> U2[初始化配置]
     U2 --> U3[加载 Agent 图]
     U3 --> U4[启动 Web 界面]
     U4 --> U5[监听 Web 请求]
-    
+  
     %% UI请求处理循环
     U5 --> U6[处理 Web 请求]
     U6 --> U7[执行 Agent 图]
     U7 --> U8[返回响应结果]
     U8 --> U5
-    
+  
     %% 样式定义
     classDef startNode fill:#e1f5fe,stroke:#01579b,stroke-width:2px
     classDef endNode fill:#ffebee,stroke:#c62828,stroke-width:2px
     classDef processNode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
     classDef toolNode fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
     classDef uiNode fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
-    
+  
     class A startNode
     class END endNode
     class C13,C14,U7 processNode

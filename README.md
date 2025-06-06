@@ -1,6 +1,4 @@
-**dragons96**
-
- - [521274311@qq.com](mailto:521274311@qq.com)# Elpis Agent
+# Elpis Agent
 
 [中文文档](README_zh.md) | English
 
