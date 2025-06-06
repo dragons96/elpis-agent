@@ -14,11 +14,12 @@ An ultra-lightweight command-line AI coding assistant tool that mimics Cursor im
 - 🔧 **Tool Integration**: Built-in various development tools and features
 - 🎯 **Continuous Dialogue**: Support for multi-turn conversations with context preservation
 - ⚙️ **Configurable**: Support for custom models, temperature, and other parameters
-- 🧠 **Memory Management**: Configurable message history limit to prevent token overflow
+- 🧠 **Persistent Memory**: SQLite-based conversation history with automatic persistence across sessions
 - 🔍 **Codebase Indexing**: Intelligent codebase analysis and semantic search capabilities
 - 🌐 **Multi-language Support**: Built-in internationalization (i18n) support
 - 🎛️ **Dual Model Architecture**: Separate models for chat and tool operations for optimized performance
 - 🏭 **Model Factory**: Flexible model initialization supporting multiple providers and types
+- 💾 **Session Management**: Automatic session isolation and memory persistence using LangGraph checkpoints
 
 ## Installation
 
@@ -137,6 +138,20 @@ python -m elpis.main
 > Help me refactor this code to make it more efficient
 ```
 
+### Memory Persistence Examples
+
+```bash
+# First session
+> Hello, my name is Alice and I'm working on a Python project
+> What's my name?  # Agent remembers: Alice
+
+# After restarting the application with same session
+> Do you remember my name?  # Agent still remembers: Alice
+> What project was I working on?  # Agent remembers: Python project
+```
+
+**Note**: The agent automatically creates a `.elpis/memory.db` file in your current working directory to store conversation history. Different projects will have separate memory databases.
+
 ## Project Structure
 
 ```
@@ -145,11 +160,12 @@ elpis-agent/
 │   ├── __init__.py          # Package initialization
 │   ├── main.py              # Main entry point
 │   ├── agent.py             # Core agent implementation
+│   ├── langgraph_agent.py   # LangGraph-based agent with SQLite memory
 │   ├── tools.py             # Tool definitions
 │   ├── prompts.py           # Prompt templates
 │   ├── constants.py         # Constants and configurations
 │   ├── codebase.py          # Codebase indexing and semantic search
-│   ├── model_factory.py     # Model factory for flexible 
+│   ├── model_factory.py     # Model factory for flexible initialization
 │   └── i18n/                # Internationalization support (contains en.py, zh.py)
 ├── tests/                   # Test files
 ├── docs/                    # Documentation
@@ -243,11 +259,14 @@ Built-in tools include:
 
 ### Memory Management
 
-The agent implements intelligent memory management:
+The agent implements persistent memory management using SQLite:
 
-- Configurable message history limit (default: 20 messages)
-- Automatic truncation of old messages while preserving system context
-- Prevention of token overflow and cost optimization
+- **SQLite-based Storage**: Conversation history stored in `.elpis/memory.db`
+- **Session Isolation**: Different session IDs maintain separate conversation histories
+- **Automatic Persistence**: Memory survives application restarts
+- **LangGraph Checkpoints**: Built on LangGraph's checkpoint system for reliability
+- **Thread Safety**: Concurrent access support with built-in locking mechanisms
+- **Auto-initialization**: Database and directory created automatically on first run
 
 ### Internationalization (i18n)
 
@@ -300,11 +319,20 @@ RE`    | Embedding model    temperature               | `0.3`                |
 
 ### General Settings
 
-| Variable                | Description                                  | De
+| Variable                | Description                                  | Default |
 | ----------------------- | -------------------------------------------- | ------- |
 | `SYSTEM_PROMPT`       | Custom system prompt                         | -       |
-| `MAX_MEMORY_MESSAGES` | Maximum number of messages to ep in memory | `20`  |
-| `LANG`                | Interface language (zh/en)                   | `zh`  |
+| `LANG`                | Interface language (zh/en)                   | `zh`    |
+
+### Memory Configuration
+
+The SQLite-based memory system automatically manages conversation history:
+
+- **Database Location**: `.elpis/memory.db` in current working directory
+- **Session Management**: Each session ID maintains separate conversation threads
+- **Automatic Cleanup**: No manual configuration required
+- **Persistence**: Conversations survive application restarts
+- **Thread Safety**: Built-in support for concurrent access
 
 ### Model Configurati
 on Prefixes
@@ -335,11 +363,6 @@ Each prefix supports:
 4. Install in development mode: `uv pip install -e .`
 5. Install development dependencies: `uv pip install pytest black flake8`
 
-### Running Tests
-
-```bash
-pytest tests/
-```
 
 ### Code Formatting
 
@@ -361,8 +384,8 @@ X
 - [X] **Codebase & Indexing**: ✅ Implemented codebase analysis and intelligent indexing
 - [X] **Multi-language Support**: ✅ Built-in internationalization (i18n) support
 - [X] **Dual Model Architecture**: ✅ Separate models for chat and tool operations
+- [X] **Persistent Memory System**: ✅ SQLite-based conversation history with session management
 - [ ] **Enhanced Web Search**: Improve web search tools with better result filtering and integration
-- [ ] **Message & Operation Memory**: Advanced message memorization and operation history tracking
 - [ ] **IDE Plugin Development**: Create plugins for popular IDEs (VS Code, IntelliJ, etc.)
 
 ### 🔧 Additional Features
