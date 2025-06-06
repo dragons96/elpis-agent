@@ -290,8 +290,8 @@ flowchart TD
     %% CLI User Interaction Loop
     C7 --> C8{Input Type Detection}
     C8 -->|Exit Command| END[Exit Application]
-    C8 -->|Index Command| C9{Codebase Exists?}
     C8 -->|User Question| C10[Process User Message]
+    C8 -->|Index Command| C9{Codebase Exists?}
   
     C9 -->|Yes| C11[Execute Codebase Indexing]
     C9 -->|No| C12[Show Prompt Message]
@@ -302,8 +302,8 @@ flowchart TD
     C10 --> C13[Invoke Chat Model]
     C13 --> C14[Stream Response Output]
     C14 --> C15{Contains Tool Calls?}
-    C15 -->|No| C16{Task Completed?}
     C15 -->|Yes| C17[Execute Tool Calls]
+    C15 -->|No| C16{Task Completed?}
     C16 -->|Yes| C7
     C16 -->|No| C18[Add Continue Prompt]
     C17 --> C19[Process Tool Results]
