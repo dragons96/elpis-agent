@@ -17,6 +17,7 @@
 - 🌐 **多语言支持**: 内置国际化(i18n)支持，支持中英文界面
 - 🏗️ **双模型架构**: 分离聊天模型和工具模型，优化性能和成本
 - 🏭 **模型工厂**: 灵活的模型初始化和配置系统
+- ✅ **用户确认**: 对危险操作（文件创建/删除、命令执行）进行交互式确认
 
 ## 安装
 
@@ -28,7 +29,7 @@
 uvx --no-cache --from https://github.com/dragons96/elpis-agent.git elpis --env_file /path/to/.env --lang [en|zh]
 ```
 
-此命令将：uvx --no-cache --from git@github.com:dragons96/elpis-agent.git elpis --env_file D:\Codes\examples\my-agent\.env --lang zhuvx --no-cache --from git@github.com:dragons96/elpis-agent.git elpis --env_file D:\Codes\examples\my-agent\.env --lang zh
+此命令将：
 
 - 自动下载并运行最新版本的 elpis-agent
 - 使用您的自定义环境配置文件
@@ -219,6 +220,11 @@ flowchart TD
 - 基于 SQLite 的持久化记忆管理
 - 会话隔离和跨会话记忆恢复
 - 集成代码库索引和搜索功能
+- **用户确认系统**: 使用 LangGraph interrupt 功能对危险操作进行交互式确认
+  - 自动检测风险操作（文件创建/删除、命令执行）
+  - 通过命令行界面进行实时用户交互
+  - 优雅处理用户批准/拒绝决策
+  - 显示详细操作信息以便用户做出明智决策
 
 #### 记忆化管理
 
@@ -279,6 +285,12 @@ mypy src/
 
 # 运行测试
 pytest
+
+# 运行 SQLite 记忆化测试
+python test_sqlite_memory.py
+
+# 测试用户确认功能
+python test_user_confirmation.py
 ```
 
 ### 添加新工具
@@ -342,6 +354,31 @@ Elpis Agent 使用 LangGraph 的 SQLite checkpoint 功能实现持久化记忆�
 - **线程安全**: 支持并发访问，适用于多线程环境
 
 > 💡 **提示**: 无需额外配置，SQLite 记忆化功能开箱即用。如需自定义数据库位置，可以修改 `langgraph_agent.py` 中的路径设置。
+
+### 用户确认配置
+
+智能体包含一个安全系统，对潜在危险操作要求用户确认：
+
+- **危险操作**: 文件创建、删除、编辑和命令执行
+- **交互式确认**: 通过命令行界面进行实时提示
+- **可定制**: 可配置包含/排除特定操作
+- **优雅处理**: 对拒绝操作进行适当的取消和错误处理
+
+```python
+# 自定义危险操作列表
+agent.DANGEROUS_TOOLS = {
+    'create_file',
+    'delete_file', 
+    'edit_file',
+    'run_terminal_cmd'
+}
+
+# 禁用特定工具的确认
+agent.DANGEROUS_TOOLS.discard('create_file')
+
+# 禁用所有确认
+agent.DANGEROUS_TOOLS = set()
+```
 
 ## 🚧 TODO 功能规划
 

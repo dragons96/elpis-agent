@@ -27,7 +27,7 @@ def codebase_search(
 ):
     """Find snippets of code from the codebase most relevant to the search query. This is a semantic search tool, so the query should ask for something semantically matching what is needed. If it makes sense to only search in particular directories, please specify them in the target_directories field. Unless there is a clear reason to use your own search query, please just reuse the user's exact query with their wording. Their exact wording/phrasing can often be helpful for the semantic search query. Keeping the same exact question format can also be helpful."""
     if codebase is None:
-        print("codebase is not initialized", flush=True)
+        print(f"[{constants.AI_AGENT_NAME}] codebase is not initialized", flush=True)
         return "codebase is not initialized"
     # todo: implements target_directories
     if explanation:
@@ -89,6 +89,8 @@ def read_file(
         if before_summary or after_summary:
             output = f"{before_summary}\n{output}\n{after_summary}"
 
+        print(f"[{constants.AI_AGENT_NAME}]: read_file {target_file} : ({start_line_one_indexed}-{end_line_one_indexed_inclusive})")
+
         return output
 
     except Exception as e:
@@ -102,14 +104,12 @@ def read_file(
 def run_terminal_cmd(
         command: str,
         is_background: bool,
-        require_user_approval: bool = True,
         explanation: str | None = None,
 ):
     """PROPOSE a command to run on behalf of the user. If you have this tool, note that you DO have the ability to run commands directly on the USER's system. Note that the user will have to approve the command before it is executed. The user may reject it if it is not to their liking, or may modify the command before approving it. If they do change it, take those changes into account. The actual command will NOT execute until the user approves it. The user may not approve it immediately. Do NOT assume the command has started running. If the step is WAITING for user approval, it has NOT started running. In using these tools, adhere to the following guidelines: 1. Based on the contents of the conversation, you will be told if you are in the same shell as a previous step or a different shell. 2. If in a new shell, you should `cd` to the appropriate directory and do necessary setup in addition to running the command. 3. If in the same shell, the state will persist (eg. if you cd in one step, that cwd is persisted next time you invoke this tool). 4. For ANY commands that would use a pager or require user interaction, you should append ` | cat` to the command (or whatever is appropriate). Otherwise, the command will break. You MUST do this for: git, less, head, tail, more, etc. 5. For commands that are long running/expected to run indefinitely until interruption, please run them in the background. To run jobs in the background, set `is_background` to true rather than changing the details of the command. 6. Dont include any newlines in the command.
 
     :param command: The terminal command to execute
     :param is_background: Whether the command should be run in the background
-    :param require_user_approval: Whether the user must approve the command before it is executed. Only set this to false if the command is safe and if it matches the user's requirements for commands that should be executed automatically.
     :param explanation: One sentence explanation as to why this command needs to be run and how it contributes to the goal.
     :return:
     """
@@ -123,34 +123,29 @@ def run_terminal_cmd(
 
     # Display proposed command
     print(f"[Proposed Command]: {command}", flush=True)
-    if require_user_approval:
-        user_input = input("Do you want to run this command? (y/n): ").strip().lower()
-        if user_input not in ("y", "yes"):
-            return "Command cancelled by user."
+    # Auto-detect Python-related commands
+    python_commands = {"python", "pip", "uv", "gunicorn", "flask"}
+    first_token = command.strip().split()[0].lower()
 
-        # Auto-detect Python-related commands
-        python_commands = {"python", "pip", "uv", "gunicorn", "flask"}
-        first_token = command.strip().split()[0].lower()
+    venv_path = os.path.join(os.getcwd(), ".venv")
+    activate_script = ""
 
-        venv_path = os.path.join(os.getcwd(), ".venv")
-        activate_script = ""
+    if first_token in python_commands and os.path.isdir(venv_path):
+        # Determine activation script based on OS
+        if os.name == 'posix':
+            activate_script = os.path.join(venv_path, "bin", "activate")
+            activate_cmd = f"source {activate_script}"
+        else:
+            activate_script = os.path.join(venv_path, "Scripts", "activate")
+            activate_cmd = activate_script
 
-        if first_token in python_commands and os.path.isdir(venv_path):
-            # Determine activation script based on OS
-            if os.name == 'posix':
-                activate_script = os.path.join(venv_path, "bin", "activate")
-                activate_cmd = f"source {activate_script}"
-            else:
-                activate_script = os.path.join(venv_path, "Scripts", "activate")
-                activate_cmd = activate_script
+        print(f"[{constants.AI_AGENT_NAME}] Activating virtual environment at {venv_path}...", flush=True)
 
-            print(f"[{constants.AI_AGENT_NAME}] Activating virtual environment at {venv_path}...", flush=True)
-
-            # Wrap original command with activation
-            if os.name == 'posix':
-                command = f"source {activate_script} && {command}"
-            else:
-                command = f'{activate_script} && {command}'
+        # Wrap original command with activation
+        if os.name == 'posix':
+            command = f"source {activate_script} && {command}"
+        else:
+            command = f'{activate_script} && {command}'
 
     # Run command
     try:
@@ -296,20 +291,20 @@ def grep_search(
 )
 def edit_file(
         target_file: str,
-        instructions: str,
+        explanation: str,
         code_edited: str,
         code_edit: str,
 ):
     """Use this tool to propose an edit to an existing file. This will be read by a less intelligent model, which will quickly apply the edit. You should make it clear what the edit is, while also minimizing the unchanged code you write. When writing the edit, you should specify each edit in sequence, with the special comment `// ... existing code ...` to represent unchanged code in between edited lines. For example: ``` // ... existing code ... FIRST_EDIT // ... existing code ... SECOND_EDIT // ... existing code ... THIRD_EDIT // ... existing code ... ``` You should still bias towards repeating as few lines of the original file as possible to convey the change. But, each edit should contain sufficient context of unchanged lines around the code you're editing to resolve ambiguity. DO NOT omit spans of pre-existing code (or comments) without using the `// ... existing code ...` comment to indicate its absence. If you omit the existing code comment, the model may inadvertently delete these lines. Make sure it is clear what the edit should be, and where it should be applied. You should specify the following arguments before the others: [target_file]
 
     :param target_file: The target file to modify. Always specify the target file as the first argument. You can use either a relative path in the workspace or an absolute path. If an absolute path is provided, it will be preserved as is.
-    :param instructions: A single sentence instruction describing what you are going to do for the sketched edit. This is used to assist the less intelligent model in applying the edit. Please use the first person to describe what you are going to do. Dont repeat what you have said previously in normal messages. And use it to disambiguate uncertainty in the edit.
+    :param explanation: A single sentence instruction describing what you are going to do for the sketched edit. This is used to assist the less intelligent model in applying the edit. Please use the first person to describe what you are going to do. Dont repeat what you have said previously in normal messages. And use it to disambiguate uncertainty in the edit.
     :param code_edited: The exact block of code to find and replace.
     :param code_edit: Specify ONLY the precise lines of code that you wish to edit. **NEVER specify or write out unchanged code**. Instead, represent all unchanged code using the comment of the language you're editing in - example: `// ... existing code ...`
     :return:
     """
 
-    print(f"[{constants.AI_AGENT_NAME}] {instructions}", flush=True)
+    print(f"[{constants.AI_AGENT_NAME}] {explanation}", flush=True)
 
     if not os.path.exists(target_file):
         return f"File {target_file} does not exist."
@@ -533,7 +528,7 @@ def create_file(
             try:
                 codebase.add_file_documents(full_path)
             except Exception as e:
-                print('Codebase add file index error.')
+                print(f'[{constants.AI_AGENT_NAME}] Codebase add file index error.')
 
         return f"Successfully created file: {target_file}"
     except PermissionError:

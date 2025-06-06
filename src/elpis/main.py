@@ -68,7 +68,7 @@ def main(
         # Generate session_id based on current directory path MD5
         current_dir = os.getcwd()
         session_id = hashlib.md5(current_dir.encode('utf-8')).hexdigest()
-        agent = LangGraphElpisAgent(session_id=session_id)
+        agent = LangGraphElpisAgent(session_id=session_id, lang=lang)
     else:
         print(f"[{constants.AI_AGENT_NAME}] Using original implementation", flush=True)
         agent = ElpisAgent()

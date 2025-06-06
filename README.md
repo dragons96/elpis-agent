@@ -20,6 +20,7 @@ An ultra-lightweight command-line AI coding assistant tool that mimics Cursor im
 - 🎛️ **Dual Model Architecture**: Separate models for chat and tool operations for optimized performance
 - 🏭 **Model Factory**: Flexible model initialization supporting multiple providers and types
 - 💾 **Session Management**: Automatic session isolation and memory persistence using LangGraph checkpoints
+- ✅ **User Confirmation**: Interactive confirmation for dangerous operations (file creation/deletion, command execution)
 
 ## Installation
 
@@ -150,6 +151,29 @@ python -m elpis.main
 > What project was I working on?  # Agent remembers: Python project
 ```
 
+```python
+# Cross-session memory persistence example
+agent1 = LangGraphElpisAgent(chat_model=chat_model, session_id="project_analysis")
+agent1.ask("Please analyze the main.py file")
+# ... conversation continues ...
+
+# Later, resume the same session
+agent2 = LangGraphElpisAgent(chat_model=chat_model, session_id="project_analysis")
+agent2.ask("What did we discuss about main.py earlier?")  # Agent remembers previous context
+
+# User confirmation for dangerous operations
+agent = LangGraphElpisAgent(chat_model=chat_model)
+agent.ask("Please create a new config file with database settings")
+# Output:
+# [Elpis] Detected dangerous operation requiring confirmation:
+#   1. create_file
+#      target_file: config.json
+#      content: {"database": {"host": "localhost", "port": 5432}}
+# 
+# Please confirm whether to execute the above operation (y/n): y
+# [Elpis] User confirmed, executing operation...
+```
+
 **Note**: The agent automatically creates a `.elpis/memory.db` file in your current working directory to store conversation history. Different projects will have separate memory databases.
 
 ## Project Structure
@@ -230,6 +254,17 @@ The core AI agent class responsible for:
 - Handling tool calls and message flows
 - Maintaining conversation context
 - Integrating codebase indexing and search capabilities
+- **SQLite-based Persistent Memory**: Uses SQLite database for reliable memory storage
+- **Session Isolation**: Each conversation session maintains separate memory context
+- **Cross-session Memory Recovery**: Automatically restores conversation history when resuming sessions
+- **Memory Management**: Automatic cleanup of old sessions and efficient memory usage
+- **Thread Safety**: Safe for concurrent access across multiple sessions
+- **Automatic Persistence**: All conversations are automatically saved without manual intervention
+- **User Confirmation System**: Interactive confirmation for dangerous operations using LangGraph interrupt functionality
+  - Automatic detection of risky operations (file creation/deletion, command execution)
+  - Real-time user interaction through command-line interface
+  - Graceful handling of user approval/rejection decisions
+  - Detailed operation information display for informed decision-making
 
 ### CodebaseIndexer
 
@@ -334,6 +369,31 @@ The SQLite-based memory system automatically manages conversation history:
 - **Persistence**: Conversations survive application restarts
 - **Thread Safety**: Built-in support for concurrent access
 
+### User Confirmation Configuration
+
+The agent includes a safety system that requires user confirmation for potentially dangerous operations:
+
+- **Dangerous Operations**: File creation, deletion, editing, and command execution
+- **Interactive Confirmation**: Real-time prompts through command-line interface
+- **Customizable**: Can be configured to include/exclude specific operations
+- **Graceful Handling**: Proper cancellation and error handling for rejected operations
+
+```python
+# Customize dangerous operations list
+agent.DANGEROUS_TOOLS = {
+    'create_file',
+    'delete_file', 
+    'edit_file',
+    'run_terminal_cmd'
+}
+
+# Disable confirmation for specific tools
+agent.DANGEROUS_TOOLS.discard('create_file')
+
+# Disable all confirmations
+agent.DANGEROUS_TOOLS = set()
+```
+
 ### Model Configurati
 on Prefixes
 
@@ -369,6 +429,13 @@ Each prefix supports:
 ```bash
 black src/
 flake8 src/
+```
+
+### Running Tests
+
+```bash
+# Test user confirmation functionality
+python test_user_confirmation.py
 ```
 
 ###XBuilding Distribution
