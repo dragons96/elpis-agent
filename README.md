@@ -1,4 +1,6 @@
-# Elpis Agent
+**dragons96**
+
+ - [521274311@qq.com](mailto:521274311@qq.com)# Elpis Agent
 
 [中文文档](README_zh.md) | English
 
@@ -276,7 +278,7 @@ elpis-agent/
 flowchart TD
     %% Application Startup Phase
     A[Start Application] --> B{Select Interface Mode}
-    
+  
     %% CLI Mode Branch
     B -->|CLI Mode| C1[Load Environment Variables]
     C1 --> C2[Initialize Language Settings]
@@ -286,18 +288,18 @@ flowchart TD
     C4 --> C6[Create Agent Instance]
     C5 --> C6
     C6 --> C7[Wait for User Input]
-    
+  
     %% CLI User Interaction Loop
     C7 --> C8{Input Type Detection}
     C8 -->|Exit Command| END[Exit Application]
     C8 -->|Index Command| C9{Codebase Exists?}
     C8 -->|User Question| C10[Process User Message]
-    
+  
     C9 -->|Yes| C11[Execute Codebase Indexing]
     C9 -->|No| C12[Show Prompt Message]
     C11 --> C7
     C12 --> C7
-    
+  
     %% CLI Message Processing Flow
     C10 --> C13[Invoke Chat Model]
     C13 --> C14[Stream Response Output]
@@ -309,27 +311,27 @@ flowchart TD
     C17 --> C19[Process Tool Results]
     C18 --> C13
     C19 --> C18
-    
+  
     %% UI Mode Branch
     B -->|UI Mode| U1[Start LangGraph UI Service]
     U1 --> U2[Initialize Configuration]
     U2 --> U3[Load Agent Graph]
     U3 --> U4[Start Web Interface]
     U4 --> U5[Listen for Web Requests]
-    
+  
     %% UI Request Processing Loop
     U5 --> U6[Process Web Request]
     U6 --> U7[Execute Agent Graph]
     U7 --> U8[Return Response Result]
     U8 --> U5
-    
+  
     %% Style Definitions
     classDef startNode fill:#e1f5fe,stroke:#01579b,stroke-width:2px
     classDef endNode fill:#ffebee,stroke:#c62828,stroke-width:2px
     classDef processNode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
     classDef toolNode fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
     classDef uiNode fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
-    
+  
     class A startNode
     class END endNode
     class C13,C14,U7 processNode
@@ -421,22 +423,21 @@ Environment variables can be configured in the `.env` file:
 
 ### Embedd ing Model C onfiguration
 
-
-| Variable                       | Description                               | Default         |
-| ---------------------------- |-------------------------------------------|-----------------|
-| `EMBEDDING_BASE_URL`         | Embedding model APIe URL                  |                 | 
-|`EMBEDDING_API_KEY `         | Embedding model API key                   |                 | 
-|`EMBEDDING_MODEL `          | Embedding model name                      | 
-|`EMBEDDING_MODEL_PROVIDER `  | Embedding model provider (openai, ollama) |                 |
-| `EMBEDDING_MODEL_TYPE`     |    Embedding model type                      mbedding  | 
-| `EMBEDDING_TEMPERATU`   | Embedding model    temperature               |`0.3`                |
+| Variable                      | Description                                        | Default |
+| ----------------------------- | -------------------------------------------------- | ------- |
+| `EMBEDDING_BASE_URL`        | Embedding model APIe URL                           |         |
+| `EMBEDDING_API_KEY `        | Embedding model API key                            |         |
+| `EMBEDDING_MODEL `          | Embedding model name                               |         |
+| `EMBEDDING_MODEL_PROVIDER ` | Embedding model provider (openai, ollama)          |         |
+| `EMBEDDING_MODEL_TYPE`      | Embedding model type                      mbedding |         |
+| `EMBEDDING_TEMPERATU`       | Embedding model    temperature                     | `0.3` |
 
 ### Model Key Prefixes
 
-| Variable                        | Description                              | Defalut |
-| ------------------------------ |------------------------------------------|-------|
-| `CHAT_MODEL_KEY_PREFIX`      | Prefix for chat model configuration      |
-| `EMBEDDING_MODEL_KEY_PREFIX` | Prefix for embedding model configuration | 
+| Variable                       | Description                              | Defalut |
+| ------------------------------ | ---------------------------------------- | ------- |
+| `CHAT_MODEL_KEY_PREFIX`      | Prefix for chat model configuration      |         |
+| `EMBEDDING_MODEL_KEY_PREFIX` | Prefix for embedding model configuration |         |
 
 ### General Settings
 
@@ -564,7 +565,7 @@ We welcome contributions! Please feel free to submit a Pull Request. For major c
 
 ## Author
 
-Developed with ❤️ by the Elpis team.
+- **dragons96** - [521274311@qq.com](mailto:521274311@qq.com)
 
 ---
 
