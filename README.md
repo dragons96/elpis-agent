@@ -116,7 +116,7 @@ CHAT_MODEL_PROVIDER=openai
 CHAT_MODEL_TYPE=chat
 CHAT_TEMPERATURE=0.3
 
-# Embedding Model Configuration
+# Embedding Model Configuration (Optional - for codebase indexing)
 EMBEDDING_BASE_URL=https://api.openai.com/v1
 EMBEDDING_API_KEY=your_openai_api_key_here
 EMBEDDING_MODEL=text-embedding-3-small
@@ -129,10 +129,19 @@ CHAT_MODEL_KEY_PREFIX=CHAT
 EMBEDDING_MODEL_KEY_PREFIX=EMBEDDING
 
 # General Settings
-SYSTEM_PROMPT=
-MAX_MEMORY_MESSAGES=20
-LANG=zh
+SYSTEM_PROMPT=                    # Custom system prompt (optional)
+LANG=zh                          # Interface language (zh/en)
+
+# UI Configuration (for LangGraph UI mode)
+LANGGRAPH_API_URL=http://localhost:1024  # LangGraph UI server URL
 ```
+
+### Configuration Notes
+
+- **Chat Model**: Required for all functionality
+- **Embedding Model**: Optional, only needed for codebase indexing and semantic search
+- **Language Settings**: Set `LANG=en` for English interface or `LANG=zh` for Chinese
+- **UI Mode**: When using `elpis --ui`, the LangGraph UI will be available at the configured URL
 
 ## Usage
 
@@ -232,15 +241,25 @@ agent.ask("Please create a new config file with database settings")
 elpis-agent/
 ├── src/elpis/
 │   ├── __init__.py          # Package initialization
-│   ├── main.py              # Main entry point
-│   ├── agent.py             # Core agent implementation
+│   ├── main.py              # Main entry point for CLI
 │   ├── langgraph_agent.py   # LangGraph-based agent with SQLite memory
-│   ├── tools.py             # Tool definitions
+│   ├── tools.py             # Tool definitions and implementations
 │   ├── prompts.py           # Prompt templates
 │   ├── constants.py         # Constants and configurations
 │   ├── codebase.py          # Codebase indexing and semantic search
-│   ├── model_factory.py     # Model factory for flexible initialization
-│   └── i18n/                # Internationalization support (contains en.py, zh.py)
+│   ├── factories/           # Factory pattern implementations
+│   │   ├── __init__.py
+│   │   ├── model_factory.py      # Model factory for flexible initialization
+│   │   └── checkpointer_factory.py # Checkpointer factory for memory management
+│   ├── i18n/                # Internationalization support
+│   │   ├── __init__.py
+│   │   ├── en.py            # English language support
+│   │   └── zh.py            # Chinese language support
+│   └── ui/                  # Web UI components
+│       ├── __init__.py
+│       ├── graph.py         # LangGraph UI integration
+│       ├── graph_main.py    # UI main entry point
+│       └── langgraph.json   # LangGraph configuration
 ├── tests/                   # Test files
 ├── docs/                    # Documentation
 ├── .env.example             # Environment variables template
@@ -253,45 +272,67 @@ elpis-agent/
 ## Agent Workflow
 
 ```mermaid
-flowchart TD
-    A[Start Application] --> B[Load Environment Variables]
-    B --> C[Initialize Language Settings]
-    C --> D{Embedding Model Available?}
-    D -->|Yes| E[Initialize Codebase Indexer]
-    D -->|No| F[Skip Codebase Indexing]
-    E --> G[Create ElpisAgent Instance]
-    F --> G
-    G --> H[Wait for User Input]
+flowchart LR
+    subgraph "Application Start"
+        A[Start Application] --> B{Interface Mode?}
+    end
     
-    H --> I{Input Type?}
-    I -->|'q' or 'quit'| Z[Exit Application]
-    I -->|'i' or 'index'| J{Codebase Available?}
-    I -->|Question/Command| K[Add User Message]
+    subgraph "CLI Mode Flow"
+        B -->|CLI Mode| C[Load Environment Variables]
+        C --> E[Initialize Language Settings]
+        E --> F{Embedding Model Available?}
+        F -->|Yes| G[Initialize Codebase Indexer]
+        F -->|No| H[Skip Codebase Indexing]
+        G --> I[Create ElpisAgent Instance]
+        H --> I
+        I --> J[Wait for User Input]
+        
+        J --> O{Input Type?}
+        O -->|'q' or 'quit'| Z[Exit Application]
+        O -->|'i' or 'index'| P{Codebase Available?}
+        O -->|Question/Command| Q[Add User Message]
+        
+        P -->|Yes| R[Index Codebase]
+        P -->|No| S[Show No Codebase Message]
+        R --> J
+        S --> J
+        
+        Q --> T[Invoke Chat Model]
+        T --> U[Stream Response to User]
+        U --> V{Response Contains Tool Calls?}
+        
+        V -->|No| W{Response is 'DONE'?}
+        V -->|Yes| X[Execute Tool Calls]
+        
+        W -->|Yes| J
+        W -->|No| Y[Add Next Step Prompt]
+        Y --> T
+        
+        X --> AA[Process Tool Results]
+        AA --> BB[Add Tool Messages]
+        BB --> Y
+    end
     
-    J -->|Yes| L[Index Codebase]
-    J -->|No| M[Show No Codebase Message]
-    L --> H
-    M --> H
-    
-    K --> N[Invoke Chat Model]
-    N --> O[Stream Response to User]
-    O --> P{Response Contains Tool Calls?}
-    
-    P -->|No| Q{Response is 'DONE'?}
-    P -->|Yes| R[Execute Tool Calls]
-    
-    Q -->|Yes| H
-    Q -->|No| S[Add Next Step Prompt]
-    S --> N
-    
-    R --> T[Process Tool Results]
-    T --> U[Add Tool Messages]
-    U --> S
+    subgraph "UI Mode Flow"
+        B -->|UI Mode| D[Start LangGraph UI Server]
+        D --> K[Initialize LangGraph Configuration]
+        K --> L[Load Agent Graph]
+        L --> M[Start Web Interface]
+        M --> N[Wait for Web Requests]
+        
+        N --> CC[Process Web Request]
+        CC --> DD[Execute Agent Graph]
+        DD --> EE[Return Response]
+        EE --> N
+    end
     
     style A fill:#e1f5fe
     style Z fill:#ffebee
-    style N fill:#f3e5f5
-    style R fill:#e8f5e8
+    style T fill:#f3e5f5
+    style X fill:#e8f5e8
+    style D fill:#fff3e0
+    style M fill:#e8f5e8
+    style DD fill:#f3e5f5
 ```
 
 ## Core Components

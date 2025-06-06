@@ -105,31 +105,38 @@ cp .env.example .env
 # 聊天模型配置
 CHAT_BASE_URL=https://api.openai.com/v1
 CHAT_API_KEY=your_openai_api_key_here
-CHAT_MODEL=gpt-4o
+CHAT_MODEL=gpt-4o-mini
 CHAT_MODEL_PROVIDER=openai
 CHAT_MODEL_TYPE=chat
 CHAT_TEMPERATURE=0.3
 
-# 嵌入模型配置（用于代码库索引）
-EMBEDDING_BASE_URL=http://localhost:11434
-EMBEDDING_MODEL=nomic-embed-text
-EMBEDDING_MODEL_PROVIDER=ollama
+# 嵌入模型配置（可选 - 用于代码库索引）
+EMBEDDING_BASE_URL=https://api.openai.com/v1
+EMBEDDING_API_KEY=your_openai_api_key_here
+EMBEDDING_MODEL=text-embedding-3-small
+EMBEDDING_MODEL_PROVIDER=openai
 EMBEDDING_MODEL_TYPE=embedding
+EMBEDDING_TEMPERATURE=0.3
 
 # 模型配置前缀
 CHAT_MODEL_KEY_PREFIX=CHAT
+# 若不需要使用Codebase, 注释 EMBEDDING_MODEL_KEY_PREFIX 的配置
 EMBEDDING_MODEL_KEY_PREFIX=EMBEDDING
 
 # 通用设置
-SYSTEM_PROMPT=  # 可选，自定义系统提示词
-MAX_MEMORY_MESSAGES=20
-LANG=zh  # 界面语言：zh（中文）或 en（英文）
+SYSTEM_PROMPT=                    # 自定义系统提示词（可选）
+LANG=zh                          # 界面语言（zh/en）
 
-# 已弃用的配置（为了向后兼容）
-# OPENAI_API_KEY=your_openai_api_key_here  # 已弃用，请使用 CHAT_API_KEY
-# MODEL=gpt-4o  # 已弃用，请使用 CHAT_MODEL
-# TEMPERATURE=0.3  # 已弃用，请使用 CHAT_TEMPERATURE
+# UI 配置（用于 LangGraph UI 模式）
+LANGGRAPH_API_URL=http://localhost:8123  # LangGraph UI 服务器地址
 ```
+
+### 配置说明
+
+- **聊天模型**：所有功能都需要配置
+- **嵌入模型**：可选，仅用于代码库索引和语义搜索
+- **语言设置**：设置 `LANG=en` 使用英文界面，`LANG=zh` 使用中文界面
+- **UI 模式**：使用 `elpis --ui` 时，LangGraph UI 将在配置的地址可用
 
 ## 使用方法
 
@@ -207,61 +214,101 @@ elpis --env_file /path/to/your/.env
 ## 项目结构
 
 ```
-src/elpis/
-├── __init__.py          # 包初始化
-├── main.py              # 主入口文件
-├── agent.py             # 核心 Agent 类
-├── langgraph_agent.py   # LangGraph 代理实现（支持 SQLite 记忆化）
-├── tools.py             # 工具函数集合
-├── prompts.py           # 提示词模板
-├── constants.py         # 常量和配置
-├── codebase.py          # 代码库索引和语义搜索
-├── model_factory.py     # 模型工厂，用于灵活初始化
-├── i18n/                # 国际化支持 (包含 en.py, zh.py)
+elpis-agent/
+├── src/elpis/
+│   ├── __init__.py          # 包初始化
+│   ├── main.py              # CLI 主入口文件
+│   ├── langgraph_agent.py   # LangGraph 代理实现（支持 SQLite 记忆化）
+│   ├── tools.py             # 工具定义和实现
+│   ├── prompts.py           # 提示词模板
+│   ├── constants.py         # 常量和配置
+│   ├── codebase.py          # 代码库索引和语义搜索
+│   ├── factories/           # 工厂模式实现
+│   │   ├── __init__.py
+│   │   ├── model_factory.py      # 模型工厂，用于灵活初始化
+│   │   └── checkpointer_factory.py # 检查点工厂，用于记忆管理
+│   ├── i18n/                # 国际化支持
+│   │   ├── __init__.py
+│   │   ├── en.py            # 英文语言支持
+│   │   └── zh.py            # 中文语言支持
+│   └── ui/                  # Web UI 组件
+│       ├── __init__.py
+│       ├── graph.py         # LangGraph UI 集成
+│       ├── graph_main.py    # UI 主入口文件
+│       └── langgraph.json   # LangGraph 配置
+├── tests/                   # 测试文件
+├── docs/                    # 文档
+├── .env.example             # 环境变量模板
+├── pyproject.toml           # 项目配置
+├── README.md                # 项目文档（英文）
+├── README_zh.md             # 项目文档（中文）
+└── LICENSE                  # 许可证文件
 ```
 
 ## Agent 工作流程
 
 ```mermaid
-flowchart TD
-    A[启动应用] --> B[加载环境变量]
-    B --> C[初始化语言设置]
-    C --> D{嵌入模型可用?}
-    D -->|是| E[初始化代码库索引器]
-    D -->|否| F[跳过代码库索引]
-    E --> G[创建 ElpisAgent 实例]
-    F --> G
-    G --> H[等待用户输入]
+flowchart LR
+    subgraph "应用启动"
+        A[启动应用] --> B{界面模式?}
+    end
     
-    H --> I{输入类型?}
-    I -->|'q' 或 'quit'| Z[退出应用]
-    I -->|'i' 或 'index'| J{代码库可用?}
-    I -->|问题/命令| K[添加用户消息]
+    subgraph "CLI 模式流程"
+        B -->|CLI 模式| C[加载环境变量]
+        C --> E[初始化语言设置]
+        E --> F{嵌入模型可用?}
+        F -->|是| G[初始化代码库索引器]
+        F -->|否| H[跳过代码库索引]
+        G --> I[创建 ElpisAgent 实例]
+        H --> I
+        I --> J[等待用户输入]
+        
+        J --> O{输入类型?}
+        O -->|'q' 或 'quit'| Z[退出应用]
+        O -->|'i' 或 'index'| P{代码库可用?}
+        O -->|问题/命令| Q[添加用户消息]
+        
+        P -->|是| R[索引代码库]
+        P -->|否| S[显示无代码库消息]
+        R --> J
+        S --> J
+        
+        Q --> T[调用聊天模型]
+        T --> U[流式输出响应]
+        U --> V{响应包含工具调用?}
+        
+        V -->|否| W{响应是 'DONE'?}
+        V -->|是| X[执行工具调用]
+        
+        W -->|是| J
+        W -->|否| Y[添加下一步提示]
+        Y --> T
+        
+        X --> AA[处理工具结果]
+        AA --> BB[添加工具消息]
+        BB --> Y
+    end
     
-    J -->|是| L[索引代码库]
-    J -->|否| M[显示无代码库消息]
-    L --> H
-    M --> H
-    
-    K --> N[调用聊天模型]
-    N --> O[流式输出响应]
-    O --> P{响应包含工具调用?}
-    
-    P -->|否| Q{响应是 'DONE'?}
-    P -->|是| R[执行工具调用]
-    
-    Q -->|是| H
-    Q -->|否| S[添加下一步提示]
-    S --> N
-    
-    R --> T[处理工具结果]
-    T --> U[添加工具消息]
-    U --> S
+    subgraph "UI 模式流程"
+        B -->|UI 模式| D[启动 LangGraph UI 服务器]
+        D --> K[初始化 LangGraph 配置]
+        K --> L[加载 Agent 图]
+        L --> M[启动 Web 界面]
+        M --> N[等待 Web 请求]
+        
+        N --> CC[处理 Web 请求]
+        CC --> DD[执行 Agent 图]
+        DD --> EE[返回响应]
+        EE --> N
+    end
     
     style A fill:#e1f5fe
     style Z fill:#ffebee
-    style N fill:#f3e5f5
-    style R fill:#e8f5e8
+    style T fill:#f3e5f5
+    style X fill:#e8f5e8
+    style D fill:#fff3e0
+    style M fill:#e8f5e8
+    style DD fill:#f3e5f5
 ```
 
 ## 核心组件
