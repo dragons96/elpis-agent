@@ -1,6 +1,6 @@
 [project]
 name = "elpis-agent"
-version = "0.0.4"
+version = "0.0.5"
 description = "An agent named elpis, imitating cursor."
 readme = "README.md"
 license = { text = "MIT" }
