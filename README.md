@@ -21,6 +21,7 @@ An ultra-lightweight command-line AI coding assistant tool that mimics Cursor im
 - 🏭 **Model Factory**: Flexible model initialization supporting multiple providers and types
 - 💾 **Session Management**: Automatic session isolation and memory persistence using LangGraph checkpoints
 - ✅ **User Confirmation**: Interactive confirmation for dangerous operations (file creation/deletion, command execution)
+- 🔌 **MCP Tool Integration**: Support for Model Context Protocol (MCP) servers to extend functionality with external tools
 
 ## Quick Start (Recommended)
 
@@ -135,6 +136,9 @@ LANG=zh                          # Interface language (zh/en)
 
 # UI Configuration (for LangGraph UI mode)
 LANGGRAPH_API_URL=http://localhost:8123  # LangGraph UI server URL
+
+# MCP Configuration (Optional - for external tool integration)
+MCP_FILE_PATH=mcp.json                   # Path to MCP servers configuration file
 ```
 
 ### Configuration Notes
@@ -143,6 +147,42 @@ LANGGRAPH_API_URL=http://localhost:8123  # LangGraph UI server URL
 - **Embedding Model**: Optional, only needed for codebase indexing and semantic search
 - **Language Settings**: Set `LANG=en` for English interface or `LANG=zh` for Chinese
 - **UI Mode**: When using `elpis --ui`, the LangGraph UI will be available at the configured URL
+- **MCP Integration**: Optional, allows integration with external MCP servers for additional tools
+
+### MCP Tool Integration
+
+Elpis Agent supports Model Context Protocol (MCP) for integrating external tools and services. To use MCP tools:
+
+1. Create a `mcp.json` configuration file in your project root:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/files"]
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"]
+    }
+  }
+}
+```
+
+2. Set the `MCP_FILE_PATH` environment variable (optional, defaults to `./mcp.json`)
+
+3. Install required MCP servers (e.g., using npm/npx for Node.js-based servers)
+
+4. Start Elpis Agent - MCP tools will be automatically loaded and available
+
+**Available MCP Servers:**
+- `@modelcontextprotocol/server-filesystem`: File system operations
+- `@modelcontextprotocol/server-brave-search`: Web search capabilities
+- `@modelcontextprotocol/server-git`: Git repository operations
+- And many more from the MCP ecosystem
+
+**Note**: MCP servers run as separate processes and communicate via stdio. Ensure the specified commands and arguments are correct for your system.
 
 ## Usage
 
@@ -384,6 +424,12 @@ Built-in tools include:
 
 - **read_file**: Read file contents
 - **run_terminal_cmd**: Execute terminal commands with user confirmation
+
+**MCP Tools**: When MCP servers are configured, additional tools become available automatically:
+- **Filesystem operations**: Advanced file and directory management
+- **Web search**: Real-time web search capabilities
+- **Git operations**: Repository management and version control
+- **And more**: Extensible through the MCP ecosystem
 
 ### Memory Management
 

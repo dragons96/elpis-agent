@@ -18,6 +18,7 @@
 - 🏗️ **双模型架构**: 分离聊天模型和工具模型，优化性能和成本
 - 🏭 **模型工厂**: 灵活的模型初始化和配置系统
 - ✅ **用户确认**: 对危险操作（文件创建/删除、命令执行）进行交互式确认
+- 🔌 **MCP 工具集成**: 支持模型上下文协议 (MCP) 服务器，通过外部工具扩展功能
 
 ## 快速开始（推荐）
 
@@ -131,6 +132,9 @@ LANG=zh                          # 界面语言（zh/en）
 
 # UI 配置（用于 LangGraph UI 模式）
 LANGGRAPH_API_URL=http://localhost:8123  # LangGraph UI 服务器地址
+
+# MCP 配置（可选 - 用于外部工具集成）
+MCP_FILE_PATH=mcp.json                   # MCP 服务器配置文件路径
 ```
 
 ### 配置说明
@@ -139,6 +143,42 @@ LANGGRAPH_API_URL=http://localhost:8123  # LangGraph UI 服务器地址
 - **嵌入模型**：可选，仅用于代码库索引和语义搜索
 - **语言设置**：设置 `LANG=en` 使用英文界面，`LANG=zh` 使用中文界面
 - **UI 模式**：使用 `elpis --ui` 时，LangGraph UI 将在配置的地址可用
+- **MCP 集成**：可选，允许集成外部 MCP 服务器以获得额外工具
+
+### MCP 工具集成
+
+Elpis Agent 支持模型上下文协议 (MCP) 来集成外部工具和服务。使用 MCP 工具的步骤：
+
+1. 在项目根目录创建 `mcp.json` 配置文件：
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/files"]
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"]
+    }
+  }
+}
+```
+
+2. 设置 `MCP_FILE_PATH` 环境变量（可选，默认为 `./mcp.json`）
+
+3. 安装所需的 MCP 服务器（例如，使用 npm/npx 安装基于 Node.js 的服务器）
+
+4. 启动 Elpis Agent - MCP 工具将自动加载并可用
+
+**可用的 MCP 服务器：**
+- `@modelcontextprotocol/server-filesystem`: 文件系统操作
+- `@modelcontextprotocol/server-brave-search`: 网络搜索功能
+- `@modelcontextprotocol/server-git`: Git 仓库操作
+- 以及 MCP 生态系统中的更多服务器
+
+**注意**: MCP 服务器作为独立进程运行，通过 stdio 进行通信。请确保指定的命令和参数在您的系统上是正确的。
 
 ## 使用方法
 
@@ -372,7 +412,12 @@ flowchart TD
 
 - **read_file**: 读取文件内容，支持指定行范围
 - **run_terminal_cmd**: 执行终端命令（需用户确认）
-- 更多工具持续开发中...
+
+**MCP 工具**: 当配置了 MCP 服务器时，会自动提供额外的工具：
+- **文件系统操作**: 高级文件和目录管理功能
+- **网络搜索**: 实时网络搜索能力
+- **Git 操作**: 仓库管理和版本控制
+- **更多功能**: 通过 MCP 生态系统可扩展
 
 ## 开发
 
