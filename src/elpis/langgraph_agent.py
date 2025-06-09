@@ -5,6 +5,7 @@ from typing import Annotated, Sequence, TypedDict
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
+from langchain_core.tools import BaseTool
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
@@ -36,15 +37,20 @@ class LangGraphElpisAgent:
 
     def __init__(self, chat_model: BaseChatModel = None,
                  session_id: str = None,
-                 lang = en):
-        self._tool_selector = {tool.name: tool for tool in tools.TOOLS}
+                 lang = en,
+                 mcp_tools: list[BaseTool] = None):
+        self._all_tools = tools.TOOLS
+        if mcp_tools:
+            self._all_tools += mcp_tools
 
         if chat_model:
-            self._chat_model = chat_model.bind_tools(tools.TOOLS)
+            self._chat_model = chat_model.bind_tools(self._all_tools)
         else:
             self._chat_model = model_factory.new_model(
                 os.getenv('CHAT_MODEL_KEY_PREFIX')
-            ).bind_tools(tools.TOOLS)
+            ).bind_tools(self._all_tools)
+
+        self._tool_selector = {tool.name: tool for tool in self._all_tools}
 
         # Initialize system messages
         self._system_messages = [
@@ -71,7 +77,7 @@ class LangGraphElpisAgent:
     def _build_graph(self):
         """Build the LangGraph workflow."""
         # Create the tool node
-        tool_node = ToolNode(tools.TOOLS)
+        tool_node = ToolNode(self._all_tools)
 
         # Define the graph
         workflow = StateGraph(AgentState)
@@ -122,7 +128,7 @@ class LangGraphElpisAgent:
         """Get the current session ID."""
         return self._session_id
 
-    def _agent_node(self, state: AgentState):
+    async def _agent_node(self, state: AgentState):
         """The agent node that calls the model."""
         messages = state["messages"]
 
@@ -130,7 +136,7 @@ class LangGraphElpisAgent:
         next_message = None
         start = True
 
-        for chunk in self._chat_model.stream(messages):
+        async for chunk in self._chat_model.astream(messages):
             self._output_stream(chunk, start=start)
             start = False
             if next_message is None:
@@ -240,7 +246,7 @@ class LangGraphElpisAgent:
         # Otherwise, end
         return "end"
 
-    def ask(self, question: str):
+    async def ask(self, question: str):
         """Ask a question to the agent - maintains the same interface as ElpisAgent."""
         # Create user message
         user_message = HumanMessage(question)
@@ -251,7 +257,7 @@ class LangGraphElpisAgent:
         initial_messages = self._system_messages + [user_message]
 
         # Run the graph with checkpointing
-        result = self._graph.invoke({"messages": initial_messages}, config=config)
+        result = await self._graph.ainvoke({"messages": initial_messages}, config=config)
         
         # 处理中断情况（用户确认）
         if '__interrupt__' in result:
@@ -265,8 +271,8 @@ class LangGraphElpisAgent:
                     try:
                         user_input = input(f'[{self.__name__}]: {message}').strip()
                         # 使用 Command 恢复执行
-                        result = self._graph.invoke(Command(resume=user_input), config=config)
-                        
+                        result = await self._graph.ainvoke(Command(resume=user_input), config=config)
+
                         # 如果还有中断，继续处理（支持多个工具的单独确认）
                         while '__interrupt__' in result:
                             interrupt_info = result['__interrupt__'][0]
@@ -274,7 +280,7 @@ class LangGraphElpisAgent:
                                 interrupt_data = interrupt_info.value
                                 message = interrupt_data.get('message', '请确认操作 (y/n): ')
                                 user_input = input(f'[{self.__name__}]: {message}').strip()
-                                result = self._graph.invoke(Command(resume=user_input), config=config)
+                                result = await self._graph.ainvoke(Command(resume=user_input), config=config)
                             else:
                                 break
                     except KeyboardInterrupt:

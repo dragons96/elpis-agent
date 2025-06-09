@@ -17,3 +17,5 @@ venv/
 .venv/
 .env
 .langgraph_api/
+mcp.json
+mcp.json5
