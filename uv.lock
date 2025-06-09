@@ -400,9 +400,11 @@ name = "elpis-agent"
 version = "0.0.5"
 source = { editable = "." }
 dependencies = [
+    { name = "aiosqlite" },
     { name = "chardet" },
     { name = "click" },
     { name = "dotenv" },
+    { name = "faiss-cpu" },
     { name = "gitignore-parser" },
     { name = "langchain", extra = ["ollama", "openai"] },
     { name = "langchain-community" },
@@ -430,9 +432,11 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "aiosqlite", specifier = ">=0.21.0" },
     { name = "chardet", specifier = ">=5.2.0" },
     { name = "click", specifier = ">=8.2.1" },
     { name = "dotenv", specifier = ">=0.9.9" },
+    { name = "faiss-cpu", specifier = ">=1.11.0" },
     { name = "gitignore-parser", specifier = ">=0.1.12" },
     { name = "langchain", extras = ["ollama", "openai"], specifier = ">=0.3.25" },
     { name = "langchain-community", specifier = ">=0.3.24" },

@@ -19,3 +19,4 @@ venv/
 .langgraph_api/
 mcp.json
 mcp.json5
+/**/.elpis/

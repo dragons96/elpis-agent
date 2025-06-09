@@ -11,20 +11,20 @@ def new_checkpointer(
     elif checkpointer_type == 'sqlite':
         import os
         from pathlib import Path
-        import sqlite3
-        from langgraph.checkpoint.sqlite import SqliteSaver
+        import aiosqlite
+        from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
         elpis_dir = Path(os.getcwd()) / ".elpis"
         elpis_dir.mkdir(exist_ok=True)
 
         # Create SQLite database file path
-        db_path = elpis_dir / "memory.db"
+        db_path = elpis_dir / "checkpoint.db"
 
         # Create SQLite connection
         # check_same_thread=False is OK as SqliteSaver uses locks for thread safety
-        conn = sqlite3.connect(str(db_path), check_same_thread=False)
+        conn = aiosqlite.connect(str(db_path), check_same_thread=False)
 
         # Initialize and return SqliteSaver
-        return SqliteSaver(conn)
+        return AsyncSqliteSaver(conn)
 
     return None
 

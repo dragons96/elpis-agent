@@ -9,9 +9,11 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
+    "aiosqlite>=0.21.0",
     "chardet>=5.2.0",
     "click>=8.2.1",
     "dotenv>=0.9.9",
+    "faiss-cpu>=1.11.0",
     "gitignore-parser>=0.1.12",
     "langchain-community>=0.3.24",
     "langchain-mcp-adapters>=0.1.7",

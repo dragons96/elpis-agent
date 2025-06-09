@@ -26,11 +26,11 @@ class AgentState(TypedDict):
 class LangGraphElpisAgent:
     """LangGraph implementation of ElpisAgent with the same interface."""
     __name__ = constants.AI_AGENT_NAME
-    
+
     # 需要用户确认的危险操作工具
     DANGEROUS_TOOLS = {
         'create_file',
-        'delete_file', 
+        'delete_file',
         'edit_file',
         'run_terminal_cmd'
     }
@@ -99,7 +99,7 @@ class LangGraphElpisAgent:
                 "end": END,
             }
         )
-        
+
         # Add conditional edges from user confirmation
         workflow.add_conditional_edges(
             "user_confirmation_node",
@@ -150,27 +150,27 @@ class LangGraphElpisAgent:
             "messages": [next_message],
         }
 
-    def _user_confirmation_node(self, state: AgentState):
+    async def _user_confirmation_node(self, state: AgentState):
         """用户确认节点，检查是否需要用户确认危险操作"""
         messages = state["messages"]
         last_message = messages[-1]
-        
+
         if not (hasattr(last_message, 'tool_calls') and last_message.tool_calls):
             return {"pending_tool_calls": None, "user_confirmation": None}
-        
+
         # 检查是否有需要确认的危险操作
         dangerous_calls = []
         for tool_call in last_message.tool_calls:
             if tool_call['name'] in self.DANGEROUS_TOOLS:
                 dangerous_calls.append(tool_call)
-        
+
         if not dangerous_calls:
             return {"pending_tool_calls": None, "user_confirmation": None}
-        
+
         # 对每个危险操作单独进行确认
         confirmed_calls = []
         cancelled_calls = []
-        
+
         for tool_call in dangerous_calls:
             tool_name = tool_call['name']
 
@@ -182,13 +182,13 @@ class LangGraphElpisAgent:
 {self._lang.HUMAN_OPERATION_ALLOW_MESSAGE.format(tool_name)}""",
                 "tool_call": tool_call,
             })
-            
+
             # 处理用户确认结果
             if confirmation and confirmation.lower().strip() in ['y', 'yes', '是', '确认']:
                 confirmed_calls.append(tool_call)
             else:
                 cancelled_calls.append(tool_call)
-        
+
         # 如果有被取消的操作，创建取消消息
         if cancelled_calls:
             cancelled_messages = []
@@ -198,42 +198,42 @@ class LangGraphElpisAgent:
                     tool_call_id=tool_call['id']
                 )
                 cancelled_messages.append(tool_message)
-            
+
             # 更新消息列表，移除被取消的工具调用
             updated_last_message = last_message
             if hasattr(updated_last_message, 'tool_calls'):
                 # 只保留确认的工具调用
                 confirmed_tool_call_ids = {call['id'] for call in confirmed_calls}
-                updated_tool_calls = [call for call in updated_last_message.tool_calls 
+                updated_tool_calls = [call for call in updated_last_message.tool_calls
                                     if call['id'] in confirmed_tool_call_ids or call['name'] not in self.DANGEROUS_TOOLS]
                 updated_last_message.tool_calls = updated_tool_calls
-            
+
             return {
                 "messages": cancelled_messages,
                 "pending_tool_calls": confirmed_calls if confirmed_calls else None,
                 "user_confirmation": "partial" if confirmed_calls else "all_rejected"
             }
-        
+
         return {
             "pending_tool_calls": confirmed_calls,
             "user_confirmation": "approved"
         }
-    
+
     def _handle_confirmation(self, state: AgentState):
         """处理用户确认结果"""
         pending_calls = state.get("pending_tool_calls")
         confirmation = state.get("user_confirmation")
-        
+
         # 如果没有待确认的操作，直接执行工具
         if not pending_calls:
             return "no_confirmation_needed"
-        
+
         # 处理用户确认结果
         if confirmation in ("approved", "partial"):
             return "approved"
         else:
             return "rejected"
-    
+
     def _should_continue(self, state: AgentState):
         """Determine whether to continue or end the conversation."""
         messages = state["messages"]
@@ -258,7 +258,7 @@ class LangGraphElpisAgent:
 
         # Run the graph with checkpointing
         result = await self._graph.ainvoke({"messages": initial_messages}, config=config)
-        
+
         # 处理中断情况（用户确认）
         if '__interrupt__' in result:
             interrupts = result['__interrupt__']
@@ -266,7 +266,7 @@ class LangGraphElpisAgent:
                 if interrupt_info.resumable:
                     interrupt_data = interrupt_info.value
                     message = interrupt_data.get('message', '请确认操作 (y/n): ')
-                    
+
                     # 获取用户输入
                     try:
                         user_input = input(f'[{self.__name__}]: {message}').strip()

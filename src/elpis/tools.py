@@ -2,6 +2,8 @@ import os.path
 import subprocess
 from functools import partial
 
+from langchain_community.vectorstores import FAISS
+
 from elpis.codebase import CodebaseIndexer
 
 subprocess.Popen = partial(subprocess.Popen, encoding="utf-8")
@@ -13,7 +15,7 @@ codebase: CodebaseIndexer | None = None
 
 def init_codebase(codebase_path: str):
     global codebase
-    codebase = CodebaseIndexer(codebase_path)
+    codebase = CodebaseIndexer(codebase_path, vector_store_cls=FAISS)
 
 
 @tool(

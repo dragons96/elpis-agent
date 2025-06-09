@@ -15,6 +15,27 @@ from elpis.factories import model_factory
 class CodebaseIndexer:
     """A simple codebase and index"""
 
+    DEFAULT_GITIGNORE = """.mypy_cache/
+/.coverage
+/.coverage.*
+/.nox/
+/.python-version
+/.pytype/
+/dist/
+/docs/_build/
+/src/*.egg-info/
+__pycache__/
+.idea/
+.vscode/
+build/
+dist/
+logs/
+venv/
+.venv/
+node_modules/
+.elpis/
+"""
+
     def __init__(self, workspace: str = os.getcwd(), embeddings: Embeddings = None,
                  vector_store_cls: Type[VectorStore] = InMemoryVectorStore,
                  text_chunk_size: int = 1000, text_chunk_overlap: int = 200,
@@ -89,28 +110,11 @@ class CodebaseIndexer:
         return file_suffix in self._file_suffix_code_mapping
 
     def get_current_gitignore_matchers(self) -> Callable[[str], bool] | None:
-        default_gitignore_matchers = parse_gitignore_str(""".mypy_cache/
-/.coverage
-/.coverage.*
-/.nox/
-/.python-version
-/.pytype/
-/dist/
-/docs/_build/
-/src/*.egg-info/
-__pycache__/
-.idea/
-.vscode/
-build/
-dist/
-logs/
-venv/
-.venv/
-node_modules/
-""", base_dir=self._workspace)
+        default_gitignore_matchers = parse_gitignore_str(self.DEFAULT_GITIGNORE, base_dir=self._workspace)
         gitignore_path = os.path.join(self._workspace, '.gitignore')
         if os.path.exists(gitignore_path):
-            return lambda f: default_gitignore_matchers(f) or parse_gitignore(gitignore_path, base_dir=self._workspace)(f)
+            return lambda f: default_gitignore_matchers(f) or parse_gitignore(gitignore_path, base_dir=self._workspace)(
+                f)
         return default_gitignore_matchers
 
     def index_codebase(self):
@@ -164,7 +168,8 @@ node_modules/
         if not current_documents:
             return []
 
-        splitter_key = self._file_suffix_code_mapping[file_suffix] if file_suffix in self._file_suffix_code_mapping else 'text'
+        splitter_key = self._file_suffix_code_mapping[
+            file_suffix] if file_suffix in self._file_suffix_code_mapping else 'text'
         splitter = self._splitters.get(file_suffix)
         if splitter is None:
             if splitter_key == 'text':
@@ -186,7 +191,8 @@ node_modules/
 
         # 更新 mtime 记录
         if self._embeddings and not self._vectorstore:
-            self._vectorstore = self._vector_store_cls.from_documents(current_documents, self._embeddings)
+            self._vectorstore = self._vector_store_cls.from_documents(current_documents,
+                                                                      embedding=self._embeddings)
         else:
             self._vectorstore.add_documents(current_documents)
         return current_documents
