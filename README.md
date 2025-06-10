@@ -17,11 +17,11 @@ An ultra-lightweight command-line AI coding assistant tool that mimics Cursor im
 - 🧠 **Persistent Memory**: SQLite-based conversation history with automatic persistence across sessions
 - 🔍 **Codebase Indexing**: Intelligent codebase analysis and semantic search capabilities
 - 🌐 **Multi-language Support**: Built-in internationalization (i18n) support
-- 🎛️ **Dual Model Architecture**: Separate models for chat and tool operations for optimized performance
 - 🏭 **Model Factory**: Flexible model initialization supporting multiple providers and types
 - 💾 **Session Management**: Automatic session isolation and memory persistence using LangGraph checkpoints
 - ✅ **User Confirmation**: Interactive confirmation for dangerous operations (file creation/deletion, command execution)
 - 🔌 **MCP Tool Integration**: Support for Model Context Protocol (MCP) servers to extend functionality with external tools
+- 🧠 **Advanced Memory with Mem0**: Intelligent summarization, key information extraction, and long-term memory management powered by Mem0
 
 ## Quick Start (Recommended)
 
@@ -32,9 +32,13 @@ The easiest way to use Elpis Agent is with `uvx`, which requires no local instal
 ```bash
 # From PyPI
 uvx --from elpis-agent elpis --env_file /path/to/.env --lang [en|zh]
+# Use mem0 to manage context
+uvx --from elpis-agent[mem0] elpis --env_file /path/to/.env --lang [en|zh]
 
 # From GitHub
 uvx --no-cache --from https://github.com/dragons96/elpis-agent.git elpis --env_file /path/to/.env --lang [en|zh]
+#  From Gitee and use mem0 to manage context
+uvx --no-cache --from https://github.com/dragons96/elpis-agent.git elpis --with mem0ai --env_file /path/to/.env --lang [en|zh]
 
 # From Gitee
 uvx --no-cache --from https://gitee.com/dragons96/elpis-agent.git elpis --env_file /path/to/.env --lang [en|zh]
@@ -52,8 +56,13 @@ You can also use 'uvx' to directly run the UI interface without the need for loc
 ```bash
 # From PyPI
 uvx --from elpis-agent[ui] elpis-ui --env_file /path/to/.env --lang [en|zh]
+# Use mem0 to manage context
+uvx --from elpis-agent[ui,mem0] elpis --env_file /path/to/.env --lang [en|zh]
+
 # From Github
 uvx --no-cache --from https://github.com/dragons96/elpis-agent.git --with langgraph-cli[inmem] elpis-ui --env_file /path/to/.env --lang [en|zh]
+# From Github and use mem0 to manage context
+uvx --no-cache --from https://github.com/dragons96/elpis-agent.git --with langgraph-cli[inmem] --with mem0ai elpis-ui --env_file /path/to/.env --lang [en|zh]
 
 # From Gitee
 uvx --no-cache --from https://gitee.com/dragons96/elpis-agent.git --with langgraph-cli[inmem] elpis-ui --env_file /path/to/.env --lang [en|zh]
@@ -109,15 +118,21 @@ cp .env.example .env
 Create a `.env` file and fill in the necessary configurations:
 
 ```env
-# Chat Model Configuration
+# Define a called CHAT model.
+# *_BASE_URL:  Base URL for the model provider
 CHAT_BASE_URL=https://api.openai.com/v1
+# *_API_KEY:  API key for the model provider, if ollama model, do not set it.
 CHAT_API_KEY=your_openai_api_key_here
+# *_MODEL:  Model name
 CHAT_MODEL=gpt-4o-mini
+# *_PROVIDER:  Model provider, allow: [openai, ollama], default: openai. Other provider can use openai and update *_BASE_URL
 CHAT_MODEL_PROVIDER=openai
+# *_MODEL_TYPE:  Model type, allow: [chat, embedding], default: chat
 CHAT_MODEL_TYPE=chat
+# *_TEMPERATURE:  Model temperature, default: 0.3
 CHAT_TEMPERATURE=0.3
 
-# Embedding Model Configuration (Optional - for codebase indexing)
+# Define a called EMBEDDING model.
 EMBEDDING_BASE_URL=https://api.openai.com/v1
 EMBEDDING_API_KEY=your_openai_api_key_here
 EMBEDDING_MODEL=text-embedding-3-small
@@ -125,20 +140,37 @@ EMBEDDING_MODEL_PROVIDER=openai
 EMBEDDING_MODEL_TYPE=embedding
 EMBEDDING_TEMPERATURE=0.3
 
-# Model Key Prefixes
+# The name of the Chat model for the Agent is CAHT, which is the model defined above
 CHAT_MODEL_KEY_PREFIX=CHAT
+# The name of the Embedding model for the Agent is EMBEDDING, which is the model defined above (Optional - for codebase indexing)
 EMBEDDING_MODEL_KEY_PREFIX=EMBEDDING
 
 # General Settings
 SYSTEM_PROMPT=                    # Custom system prompt (optional)
-MAX_MEMORY_MESSAGES=20           # Maximum messages to keep in memory
-LANG=zh                          # Interface language (zh/en)
-
-# UI Configuration (for LangGraph UI mode)
-LANGGRAPH_API_URL=http://localhost:8123  # LangGraph UI server URL
 
 # MCP Configuration (Optional - for external tool integration)
 MCP_FILE_PATH=mcp.json                   # Path to MCP servers configuration file
+
+# Mem0 Advanced Memory Configuration (Optional)
+# Mem0 provides intelligent summarization, key information extraction, and long-term memory management
+# To use mem0, install with: "uvx --from elpis-agent[mem0] ..."
+
+# Method 1: Cloud API Configuration (Recommended)
+# Use Mem0's cloud service with API key - simplest setup
+MEM0_API_KEY=m-********************
+
+# Method 2: Self-hosted Model Configuration
+# Configure your own models for mem0 - more control and privacy
+# LLM model for mem0 processing (uses model defined above, e.g., CHAT)
+MEM0_MODEL_KEY_PREFIX=CHAT
+# Embedding model for mem0 vector storage (uses model defined above, e.g., EMBEDDING)
+# If not set, defaults to mem0's built-in OpenAI embedding model (requires OPENAI_API_KEY)
+MEM0_EMBEDDING_KEY_PREFIX=EMBEDDING
+# OPENAI_API_KEY=your_openai_api_key_here  # Required if MEM0_EMBEDDING_KEY_PREFIX is not set
+# Vector dimension for embedding model (default: 1536 for OpenAI models)
+# Adjust this value to match your embedding model's output dimension
+MEM0_VECTOR_STORE_EMBEDDING_MODEL_DIMS=1536
+
 ```
 
 ### Configuration Notes
@@ -148,6 +180,9 @@ MCP_FILE_PATH=mcp.json                   # Path to MCP servers configuration fil
 - **Language Settings**: Set `LANG=en` for English interface or `LANG=zh` for Chinese
 - **UI Mode**: When using `elpis --ui`, the LangGraph UI will be available at the configured URL
 - **MCP Integration**: Optional, allows integration with external MCP servers for additional tools
+- **Mem0 Advanced Memory**: Optional, provides intelligent memory management with two configuration modes:
+  - **Cloud Mode**: Use `MEM0_API_KEY` for Mem0's cloud service (easiest setup)
+  - **Self-hosted Mode**: Use `MEM0_MODEL_KEY_PREFIX` and `MEM0_EMBEDDING_KEY_PREFIX` for custom models (more control)
 
 ### MCP Tool Integration
 
@@ -383,7 +418,6 @@ flowchart TD
 
 The core AI agent class responsible for:
 
-- Managing interactions with large language models (supports dual-model architecture)
 - Handling tool calls and message flows
 - Maintaining conversation context
 - Integrating codebase indexing and search capabilities
@@ -569,36 +603,44 @@ python -m build
 
 ## TODO - Feature Roadmap
 
-X
+The following are the planned functional features that will be gradually implemented in subsequent versions:
 
-### 🎯 Core Features
+###  📚  Code repository and indexing function
 
-- [X] **Codebase & Indexing**: ✅ Implemented codebase analysis and intelligent indexing
-- [X] **Multi-language Support**: ✅ Built-in internationalization (i18n) support
-- [X] **Dual Model Architecture**: ✅ Separate models for chat and tool operations
-- [X] **Persistent Memory System**: ✅ SQLite-based conversation history with session management
-- [ ] **Enhanced Web Search**: Improve web search tools with better result filtering and integration
-- [ ] **IDE Plugin Development**: Create plugins for popular IDEs (VS Code, IntelliJ, etc.)
+-[X] **Code Base Analysis**: ✅  Automatically analyze project structure and dependency relationships
+-[X] **Intelligent Index**: ✅  Establish code semantic index to support fast retrieval
+-[X] **Multi language support**: ✅  Built in internationalization (i18n) support, supporting both Chinese and English interfaces
+-[ ] **Context aware**: Provide more accurate suggestions based on the context of the code repository
+-[ ] **Cross file Reference**: Intelligent recognition and processing of code reference relationships across files
+-[ ] **Advanced Code Library Features**: Code Dependency Graph, Refactoring Suggestions, Code Quality Analysis
+-[ ] **Incremental Index**: Supports incremental index updates for file changes
 
-### 🔧 Additional Features
+###  🌐  Improved online search tools
 
-- [ ] **Code Review Assistant**: Automated code review and suggestion system
-- [ ] **Project Template Generator**: Generate project templates based on requirements
-- [ ] **Integration with Git**: Git operations and workflow assistance
-- [ ] **Performance Monitoring**: Track and optimize agent performance
-- [ ] **Custom Tool Development**: Framework for creating custom tools
-- [ ] **Advanced Codebase Features**: Code refactoring suggestions, dependency analysis
-- [ ] **Multi-Provider Support**: Extend model factory to support more AI providers
+-[ ] **Multi search engine support**: Integrated with search engines such as Google, Bing, DuckDuckGo, etc
+-[ ] **Technical Document Search**: Search optimization specifically for technical documents and API documents
+-[ ] **Real time information acquisition**: Obtain the latest technical information and solutions
+-[ ] **Search result filtering**: Intelligent filtering and sorting of search results
 
-### 📚 Documentation & Community
+###  🧠  Message and operation memorization
+-[X] **Persistent Memory System**: ✅  SQLite based dialogue history storage and session management
+-[ ] **Operation Record**: Record the user's operating habits and preferences
+-[ ] **Intelligent Recommendation**: Providing personalized suggestions based on historical records
+-[X] **Advanced Memory Features**: Intelligent Summary, Key Information Extraction, Long Term Memory Management
 
-- [ ] **Comprehensive Documentation**: Detailed API documentation and tutorials
-- [ ] **Example Projects**: Sample projects demonstrating various use cases
-- [ ] **Community Contributions**: Guidelines and tools for community contributions
-- [ ] **Codebase Indexing Guide**: Documentation for advanced codebase features
+###  🔌  IDE plugin development
+-[ ] **VS Code Plugin**: Developing Official VS Code Extension
+-[ ] **JetBrains Plugin**: Supports JetBrains series IDEs such as IntelliJ IDEA and PyCharm
+-[ ] **Vim/Neovim plugin**: provides integrated support for Vim users
+-[ ] **Real time Collaboration**: Seamless Collaboration with Elpis in IDE
 
-Contributions are welcome! Please feel free to submit issues and pull requests.
+###  🎯  Other planning functions
+-[ ] **Code Review**: Automatic Code Review and Quality Check
+-[ ] **Test Generation**: Intelligent Generation Unit Testing and Integration Testing
+-[ ] **Document Generation**: Automatically generate code and API documentation
+-[ ] **Code Base Indexing Guide**: Provides best practices and usage guidelines for code base indexing
 
+> 💡 **Contribution Tip**: If you are interested in the above features or have other suggestions, please feel free to submit an Issue or Pull Request!
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

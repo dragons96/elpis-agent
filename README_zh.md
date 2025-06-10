@@ -15,10 +15,10 @@
 - ⚙️ **可配置**: 支持自定义模型、温度等参数
 - 🔍 **代码库索引**: 智能代码库索引和语义搜索功能
 - 🌐 **多语言支持**: 内置国际化(i18n)支持，支持中英文界面
-- 🏗️ **双模型架构**: 分离聊天模型和工具模型，优化性能和成本
 - 🏭 **模型工厂**: 灵活的模型初始化和配置系统
 - ✅ **用户确认**: 对危险操作（文件创建/删除、命令执行）进行交互式确认
 - 🔌 **MCP 工具集成**: 支持模型上下文协议 (MCP) 服务器，通过外部工具扩展功能
+- 🧠 **Mem0 高级记忆**: 基于 Mem0 的智能摘要、关键信息提取和长期记忆管理功能
 
 ## 快速开始（推荐）
 
@@ -27,11 +27,13 @@
 使用 Elpis Agent 最简单的方式是通过 `uvx`，无需本地安装：
 
 ```bash
-# 从 PyPI
-uvx --from elpis-agent elpis --env_file /path/to/.env --lang [en|zh]
+# 从 PyPI, 使用 --multi-mode 参数开启多行模式, 此时需要额外输入一个回车确认
+uvx --from elpis-agent elpis --env_file /path/to/.env --lang [en|zh] [--multi-mode]
+# 使用 mem0 持久化上下文
+uvx --from elpis-agent[mem0] elpis --env_file /path/to/.env --lang [en|zh] [--multi-mode]
+
 # 从 GitHub
 uvx --from https://github.com/dragons96/elpis-agent.git elpis --env_file /path/to/.env --lang [en|zh]
-
 # 从 Gitee
 uvx --from https://gitee.com/dragons96/elpis-agent.git elpis --env_file /path/to/.env --lang [en|zh]
 ```
@@ -48,6 +50,9 @@ uvx --from https://gitee.com/dragons96/elpis-agent.git elpis --env_file /path/to
 ```bash
 # 从 PyPI
 uvx --from elpis-agent[ui] elpis-ui --env_file /path/to/.env --lang [en|zh]
+# 使用 mem0 持久化上下文
+uvx --from elpis-agent[ui,mem0] elpis-ui --env_file /path/to/.env --lang [en|zh]
+
 # 从 GitHub
 uvx --from https://github.com/dragons96/elpis-agent.git --with langgraph-cli[inmem] elpis-ui --env_file /path/to/.env --lang [en|zh]
 
@@ -105,36 +110,58 @@ cp .env.example .env
 创建 `.env` 文件，填入必要的配置：
 
 ```env
-# 聊天模型配置
+# 定义一个名为 CHAT 的模型配置
+# *_BASE_URL:  API 基础 URL
 CHAT_BASE_URL=https://api.openai.com/v1
+# *_API_KEY:  API 密钥, ollama 无需填
 CHAT_API_KEY=your_openai_api_key_here
+# *_MODEL:  模型名称
 CHAT_MODEL=gpt-4o-mini
+# *_MODEL_PROVIDER:  模型供应商名称, 支持: [openai, ollama]. 其他遵循openai接口规范的模型均可填openai, 通过修改 *_BASE_URL 配置
 CHAT_MODEL_PROVIDER=openai
+# *_MODEL_TYPE:   模型类型, 支持: [chat, embedding] 默认为: chat
 CHAT_MODEL_TYPE=chat
+# *_TEMPERATURE:  模型温度，范围在 0 到 1 之间
 CHAT_TEMPERATURE=0.3
 
-# 嵌入模型配置（可选 - 用于代码库索引）
+# 定义一个名为 EMBEDDING 的模型配置
 EMBEDDING_BASE_URL=https://api.openai.com/v1
 EMBEDDING_API_KEY=your_openai_api_key_here
 EMBEDDING_MODEL=text-embedding-3-small
 EMBEDDING_MODEL_PROVIDER=openai
 EMBEDDING_MODEL_TYPE=embedding
-EMBEDDING_TEMPERATURE=0.3
 
-# 模型配置前缀
+# Agent 的 Chat 模型的名称, 这里使用上面定义的名为 CAHT 的模型
 CHAT_MODEL_KEY_PREFIX=CHAT
+# Agent 的 Embedding 模型的名称, 这里使用上面定义的名为 EMBEDDING 的模型（可选 - 用于代码库索引）
 EMBEDDING_MODEL_KEY_PREFIX=EMBEDDING
 
 # 通用设置
 SYSTEM_PROMPT=                    # 自定义系统提示词（可选）
-MAX_MEMORY_MESSAGES=20           # 内存中保留的最大消息数
-LANG=zh                          # 界面语言（zh/en）
-
-# UI 配置（用于 LangGraph UI 模式）
-LANGGRAPH_API_URL=http://localhost:8123  # LangGraph UI 服务器地址
 
 # MCP 配置（可选 - 用于外部工具集成）
 MCP_FILE_PATH=mcp.json                   # MCP 服务器配置文件路径
+
+# Mem0 高级记忆配置（可选）
+# Mem0 提供智能摘要、关键信息提取和长期记忆管理功能
+# 使用 mem0 需要安装时添加组件："uvx --from elpis-agent[mem0] ..."
+
+# 方式一：云端 API 配置（推荐）
+# 使用 Mem0 云服务，配置最简单
+MEM0_API_KEY=m-********************
+
+# 方式二：自托管模型配置
+# 使用自定义模型，提供更多控制和隐私保护
+# mem0 的 LLM 模型配置（使用上面定义的模型，如 CHAT）
+MEM0_MODEL_KEY_PREFIX=CHAT
+# mem0 的 Embedding 模型配置（使用上面定义的模型，如 EMBEDDING）
+# 若不设置，则默认使用 mem0 内置的 OpenAI embedding 模型（需要配置 OPENAI_API_KEY）
+MEM0_EMBEDDING_KEY_PREFIX=EMBEDDING
+# OPENAI_API_KEY=your_openai_api_key_here  # 当 MEM0_EMBEDDING_KEY_PREFIX 未设置时必需
+# 向量维度配置（默认：1536，适用于 OpenAI 模型）
+# 请根据您的 embedding 模型输出维度调整此值
+MEM0_VECTOR_STORE_EMBEDDING_MODEL_DIMS=1536
+
 ```
 
 ### 配置说明
@@ -144,6 +171,9 @@ MCP_FILE_PATH=mcp.json                   # MCP 服务器配置文件路径
 - **语言设置**：设置 `LANG=en` 使用英文界面，`LANG=zh` 使用中文界面
 - **UI 模式**：使用 `elpis --ui` 时，LangGraph UI 将在配置的地址可用
 - **MCP 集成**：可选，允许集成外部 MCP 服务器以获得额外工具
+- **Mem0 高级记忆**：可选，提供智能记忆管理，支持两种配置模式：
+  - **云端模式**：使用 `MEM0_API_KEY` 配置 Mem0 云服务（最简单的设置）
+  - **自托管模式**：使用 `MEM0_MODEL_KEY_PREFIX` 和 `MEM0_EMBEDDING_KEY_PREFIX` 配置自定义模型（更多控制权）
 
 ### MCP 工具集成
 
@@ -361,7 +391,6 @@ flowchart TD
 
 核心的 AI 代理类，负责：
 
-- 管理与大语言模型的交互（支持双模型架构）
 - 处理工具调用和消息流
 - 基于 SQLite 的持久化记忆管理
 - 会话隔离和跨会话记忆恢复
@@ -532,7 +561,6 @@ agent.DANGEROUS_TOOLS = set()
 - [X] **代码库分析**: ✅ 自动分析项目结构和依赖关系
 - [X] **智能索引**: ✅ 建立代码语义索引，支持快速检索
 - [X] **多语言支持**: ✅ 内置国际化(i18n)支持，支持中英文界面
-- [X] **双模型架构**: ✅ 分离聊天模型和工具模型，优化性能-
 - [ ] **上下文感知**: 基于代码库上下文提供更精准的建议
 - [ ] **跨文件引用**: 智能识别和处理跨文件的代码引用关系
 - [ ] **高级代码库功能**: 代码依赖图、重构建议、代码质量分析
@@ -550,7 +578,7 @@ agent.DANGEROUS_TOOLS = set()
 - [X] **持久化记忆系统**: ✅ 基于 SQLite 的对话历史存储和会话管理
 - [ ] **操作记录**: 记录用户的操作习惯和偏好
 - [ ] **智能推荐**: 基于历史记录提供个性化建议
-- [ ] **高级记忆功能**: 智能摘要、关键信息提取、长期记忆管理
+- [X] **高级记忆功能**: 智能摘要、关键信息提取、长期记忆管理
 
 ### 🔌 IDE 插件开发
 
@@ -561,7 +589,6 @@ agent.DANGEROUS_TOOLS = set()
 
 ### 🎯 其他计划功能
 
-- [ ] **多提供商支持**: 扩展对更多 AI 提供商的支持
 - [ ] **代码审查**: 自动代码审查和质量检查
 - [ ] **测试生成**: 智能生成单元测试和集成测试
 - [ ] **文档生成**: 自动生成代码文档和 API 文档
