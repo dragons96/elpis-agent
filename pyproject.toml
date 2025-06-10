@@ -28,6 +28,9 @@ dependencies = [
 ui = [
     "langgraph-cli[inmem]>=0.2.12",
 ]
+mem0 = [
+    "mem0ai"
+]
 
 
 [project.scripts]
