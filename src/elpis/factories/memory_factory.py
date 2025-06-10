@@ -3,7 +3,7 @@ import os
 
 def new_mem0(model_prefix_key: str,
              embedding_model_prefix_key: str = None):
-    from mem0 import Memory
+    from mem0 import AsyncMemory
     model_provider = os.getenv(f"{model_prefix_key}_MODEL_PROVIDER", default='openai')
 
     config = {
@@ -38,9 +38,10 @@ def new_mem0(model_prefix_key: str,
             }
         }
 
-    return Memory.from_config(config)
+    return AsyncMemory.from_config(config)
 
 
 def new_mem0_client(mem0_api_key: str):
-    from mem0 import MemoryClient
-    return MemoryClient(api_key=mem0_api_key)
+    from mem0 import AsyncMemoryClient
+    import httpx
+    return AsyncMemoryClient(api_key=mem0_api_key)

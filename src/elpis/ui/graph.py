@@ -11,8 +11,7 @@ else:
     load_dotenv()
 
 from elpis import constants, i18n, tools
-from elpis.langgraph_agent import LangGraphElpisAgent
-
+from elpis.langgraph_agent import ElpisMem0Agent
 
 lang = os.getenv('LANG')
 if not lang:
@@ -37,7 +36,7 @@ mcp_tools = None
 if os.path.exists(mcp_file_path):
     mcp_tools = asyncio.run(mcp_servers.get_mcp_tools(mcp_file_path))
 
-agent = LangGraphElpisAgent(session_id=session_id, lang=lang,
-                            mcp_tools=mcp_tools)
+agent = ElpisMem0Agent(session_id=session_id, lang=lang,
+                       mcp_tools=mcp_tools)
 
 graph = agent.graph

@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 from elpis import constants, i18n, tools
 from elpis.factories import model_factory
-from elpis.langgraph_agent import LangGraphElpisAgent
+from elpis.langgraph_agent import ElpisMem0Agent
 from elpis import mcp_servers
 
 
@@ -85,7 +85,7 @@ async def _main(
         os.getenv('CHAT_MODEL_KEY_PREFIX')
     )
 
-    agent = LangGraphElpisAgent(
+    agent = ElpisMem0Agent(
         chat_model=chat_model,
         session_id=session_id,
         lang=lang,

@@ -70,3 +70,7 @@ CODEBASE_FINISH_INDEX = '代码库索引完成! 共处理 {} 个代码块.'
 NO_CODEBASE_INDEXED = "没有配置 EMBEDDING_MODEL_KEY_PREFIX 环境变量, 无法对代码库进行索引."
 
 HUMAN_OPERATION_ALLOW_MESSAGE = "是否允许操作 {}? (y/n): "
+
+MEM0_USING_BY_MESSAGE = "通过配置'{}'使用 mem0"
+
+MEM0_ERROR_SAVE_MESSAGE = "保存mem0记录失败: {}"

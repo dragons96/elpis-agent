@@ -199,3 +199,5 @@ DONE = "done"
 DonePrompt = "当确认任务完成时, 仅输出 'done', 不要输出任何其他的额外内容"
 
 NextStepPrompt = "继续下一步, 如果所有任务都已经完成, 仅输出 'done'"
+
+RelevantPrompt = "Relevant information from previous conversations:\n"

@@ -19,7 +19,9 @@ dependencies = [
     "langchain-mcp-adapters>=0.1.7",
     "langchain[ollama,openai]>=0.3.25",
     "langgraph>=0.4.8",
+    "langgraph-api>=0.2.45",
     "langgraph-checkpoint-sqlite>=2.0.10",
+    "langgraph-cli>=0.2.12",
     "openai>=1.84.0",
     "pydantic>=2.11.5",
 ]

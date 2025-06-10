@@ -20,10 +20,10 @@ class AgentState(TypedDict):
     """The state of the agent."""
     messages: Annotated[Sequence[BaseMessage], add_messages]
     pending_tool_calls: list | None  # 待确认的工具调用
-    user_confirmation: str | None    # 用户确认结果
+    user_confirmation: str | None  # 用户确认结果
 
 
-class LangGraphElpisAgent:
+class ElpisAgent:
     """LangGraph implementation of ElpisAgent with the same interface."""
     __name__ = constants.AI_AGENT_NAME
 
@@ -37,7 +37,7 @@ class LangGraphElpisAgent:
 
     def __init__(self, chat_model: BaseChatModel = None,
                  session_id: str = None,
-                 lang = en,
+                 lang=en,
                  mcp_tools: list[BaseTool] = None):
         self._all_tools = tools.TOOLS
         if mcp_tools:
@@ -66,7 +66,7 @@ class LangGraphElpisAgent:
         self._session_id = session_id or self._generate_session_id()
 
         # Initialize checkpointer
-        self._memory = checkpointer_factory.new_checkpointer(
+        self._checkpointer = checkpointer_factory.new_checkpointer(
             os.getenv('CHECKPOINTER')
         )
 
@@ -115,7 +115,7 @@ class LangGraphElpisAgent:
         workflow.add_edge("tools", "agent")
 
         # Compile with checkpointer for memory
-        return workflow.compile(checkpointer=self._memory)
+        return workflow.compile(checkpointer=self._checkpointer)
 
     def _generate_session_id(self) -> str:
         """Generate a unique session ID based on timestamp."""
@@ -128,10 +128,9 @@ class LangGraphElpisAgent:
         """Get the current session ID."""
         return self._session_id
 
-    async def _agent_node(self, state: AgentState):
+    async def _agent_node(self, state: AgentState, config: RunnableConfig):
         """The agent node that calls the model."""
         messages = state["messages"]
-
         # Stream the response and collect it
         next_message = None
         start = True
@@ -205,7 +204,8 @@ class LangGraphElpisAgent:
                 # 只保留确认的工具调用
                 confirmed_tool_call_ids = {call['id'] for call in confirmed_calls}
                 updated_tool_calls = [call for call in updated_last_message.tool_calls
-                                    if call['id'] in confirmed_tool_call_ids or call['name'] not in self.DANGEROUS_TOOLS]
+                                      if
+                                      call['id'] in confirmed_tool_call_ids or call['name'] not in self.DANGEROUS_TOOLS]
                 updated_last_message.tool_calls = updated_tool_calls
 
             return {
@@ -304,3 +304,75 @@ class LangGraphElpisAgent:
     @property
     def graph(self):
         return self._graph
+
+
+class ElpisMem0Agent(ElpisAgent):
+
+    def __init__(self, chat_model: BaseChatModel = None, session_id: str = None, lang=en,
+                 mcp_tools: list[BaseTool] = None):
+        super().__init__(chat_model, session_id, lang, mcp_tools)
+        self._mem0 = self._build_mem0_memory()
+
+    def _build_mem0_memory(self):
+        mem0_api_key = os.getenv('MEM0_API_KEY')
+        if mem0_api_key:
+            from elpis.factories import memory_factory
+            print(f'[{self.__name__}]: ' + self._lang.MEM0_USING_BY_MESSAGE.format('MEM0_API_KEY'))
+            return memory_factory.new_mem0_client(mem0_api_key)
+        mem0_model_key_prefix = os.getenv('MEM0_MODEL_KEY_PREFIX')
+        if mem0_model_key_prefix:
+            from elpis.factories import memory_factory
+            mem0_embedding_key_prefix = os.getenv('MEM0_EMBEDDING_KEY_PREFIX')
+            print(f'[{self.__name__}]: ' + self._lang.MEM0_USING_BY_MESSAGE.format('MEM0_MODEL_KEY_PREFIX'))
+            return memory_factory.new_mem0(mem0_model_key_prefix, mem0_embedding_key_prefix)
+        return None
+
+    async def _agent_node(self, state: AgentState, config: RunnableConfig):
+        if not self._mem0:
+            return await super()._agent_node(state, config)
+
+        messages = state["messages"]
+
+        send_messages = messages
+
+        mem0_user_id = config.get('configurable').get('thread_id')
+        memories = await self._mem0.search(messages[-1].content, user_id=mem0_user_id)
+
+        if memories:
+            # Stream the response and collect it
+            context = prompts.RelevantPrompt
+            for memory in memories:
+                context += f"- {memory['memory']}\n"
+
+            send_messages = [SystemMessage(context)] + list(messages)
+
+        next_message = None
+        start = True
+
+        async for chunk in self._chat_model.astream(send_messages):
+            self._output_stream(chunk, start=start)
+            start = False
+            if next_message is None:
+                next_message = chunk
+            else:
+                next_message += chunk
+
+        print()  # Add newline after streaming
+
+        try:
+            await self._mem0.add([
+                {
+                    'role': 'user',
+                    'content': messages[-1].content,
+                },
+                {
+                    'role': 'assistant',
+                    'content': next_message.content,
+                }
+            ], user_id=mem0_user_id, agent_id=mem0_user_id, output_format='v1.1')
+        except Exception as e:
+            print(f'[{self.__name__}]: ' + self._lang.MEM0_ERROR_SAVE_MESSAGE.format(str(e)))
+
+        return {
+            "messages": [next_message],
+        }
