@@ -369,7 +369,7 @@ class ElpisMem0Agent(ElpisAgent):
                     'role': 'assistant',
                     'content': next_message.content,
                 }
-            ], user_id=mem0_user_id, agent_id=mem0_user_id, output_format='v1.1')
+            ], user_id=mem0_user_id, agent_id=mem0_user_id)
         except Exception as e:
             print(f'[{self.__name__}]: ' + self._lang.MEM0_ERROR_SAVE_MESSAGE.format(str(e)))
 
