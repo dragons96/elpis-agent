@@ -102,7 +102,7 @@ async def _main(
 @click.option('--env_file', default=None, help='Path to a .env file')
 @click.option('--lang', default='en', type=click.Choice(['en', 'zh']),
               help='Language to use for the tool. Default is "en"')
-@click.option('--multi_mode', is_flag=True, default=False, help='Enable multi-line-mode (default: False)')
+@click.option('--multi-mode', is_flag=True, default=False, help='Enable multi-line-mode (default: False)')
 @click.help_option('-h', '--help')
 def main(
         env_file: str | None = None,
