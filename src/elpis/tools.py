@@ -1,12 +1,9 @@
 import os.path
 import subprocess
-from functools import partial
 
 from langchain_community.vectorstores import FAISS
 
 from elpis.codebase import CodebaseIndexer
-
-subprocess.Popen = partial(subprocess.Popen, encoding="utf-8")
 
 from langchain_core.tools import tool
 from elpis import constants
