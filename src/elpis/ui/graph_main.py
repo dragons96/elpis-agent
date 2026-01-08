@@ -8,7 +8,7 @@ import typing
 from typing import Optional, Mapping, Sequence
 
 import click
-from langgraph_api.cli import AuthConfig, patch_environment, _get_ls_origin, _get_org_id
+from langgraph_api.cli import patch_environment, _get_ls_origin, _get_org_id
 
 if typing.TYPE_CHECKING:
     from langgraph_api.config import StoreConfig, HttpConfig
@@ -160,7 +160,7 @@ def run_server(
     reload_includes: Sequence[str] | None = None,
     reload_excludes: Sequence[str] | None = None,
     store: typing.Optional["StoreConfig"] = None,
-    auth: AuthConfig | None = None,
+
     http: typing.Optional["HttpConfig"] = None,
     ui: dict | None = None,
     ui_config: dict | None = None,
@@ -253,7 +253,6 @@ def run_server(
         LANGGRAPH_STORE=json.dumps(store) if store else None,
         LANGSERVE_GRAPHS=json.dumps(graphs) if graphs else None,
         LANGSMITH_LANGGRAPH_API_VARIANT="local_dev",
-        LANGGRAPH_AUTH=json.dumps(auth) if auth else None,
         LANGGRAPH_HTTP=json.dumps(http) if http else None,
         LANGGRAPH_UI=json.dumps(ui) if ui else None,
         LANGGRAPH_UI_CONFIG=json.dumps(ui_config) if ui_config else None,

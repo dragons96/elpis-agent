@@ -518,7 +518,7 @@ wheels = [
 
 [[package]]
 name = "elpis-agent"
-version = "0.0.7"
+version = "0.0.8"
 source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },
@@ -573,7 +573,7 @@ requires-dist = [
     { name = "langgraph-checkpoint-sqlite", specifier = ">=2.0.10" },
     { name = "langgraph-cli", specifier = ">=0.2.12" },
     { name = "langgraph-cli", extras = ["inmem"], marker = "extra == 'ui'", specifier = ">=0.2.12" },
-    { name = "mcp", specifier = ">=1.25.0" },
+    { name = "mcp", specifier = ">=1.9.3" },
     { name = "mem0ai", marker = "extra == 'mem0'" },
     { name = "openai", specifier = ">=1.84.0" },
     { name = "pydantic", specifier = ">=2.11.5" },
